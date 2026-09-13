@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheStrandBrand — Premium Hair & Wigs</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     NAVIGATION — appears the same on every page. If you add a new
+     page, copy this whole <header> block over so the links match.
+     ============================================================ -->
+<header class="site-header">
+  <div class="wrap nav">
+    <a href="index.html" class="brand">TheStrandBrand</a>
+
+    <button class="nav-toggle" data-nav-toggle aria-label="Open menu">☰</button>
+
+    <ul class="nav-links" data-nav-links>
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="track-order.html">Track Order</a></li>
+      <li>
+        <a href="favorites.html" class="nav-icon-link" aria-label="Favorites">
+          ♡ <span class="badge-count" data-fav-badge style="display:none">0</span>
+        </a>
+      </li>
+      <li>
+        <a href="cart.html" class="nav-icon-link" aria-label="Cart">
+          🛍 <span class="badge-count" data-cart-badge style="display:none">0</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</header>
+
+<!-- ============================================================
+     HERO — HOW TO ADD YOUR OWN BACKGROUND PHOTO:
+     1. Save your photo as: images/hero/hero.jpg
+     2. That's it. This section already looks for that exact file.
+     If you'd rather use a different file name, just change the
+     "background-image" line a few lines down.
+     ============================================================ -->
+<section class="hero" style="background-image: url('images/hero/background.jpg.jpg');">
+  <div class="hero-content">
+    <p style="text-transform:uppercase; letter-spacing:0.14em; color:var(--accent); font-size:0.85rem; margin-bottom:0.5rem;">
+      Accra &middot; Ghana
+    </p>
+    <h1>Hair that holds its own.</h1>
+    <p>Raw, single-donor bundles and hand-tied wigs. Sourced honestly, delivered to your door.</p>
+
+    <form class="search-bar hero-search" data-search-form>
+      <input type="text" placeholder="Search for straight, curly, bob…" data-search-input aria-label="Search products">
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <div style="margin-top:1.25rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
+      <a href="#shop" class="btn btn-primary">Shop the collection</a>
+      <a href="about.html" class="btn btn-outline" style="border-color:#fff; color:#fff;">Our story</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PRODUCT GRID
+     ============================================================ -->
+<section class="section" id="shop">
+  <div class="wrap">
+    <div class="section-label">Shop the collection</div>
+
+    <!-- These filter chips (All, Featured, Straight, Curly…) are built
+         automatically from the "type" values in js/products.js — you
+         don't need to edit this HTML when you add a new hair type. -->
+    <div class="filter-row" data-filter-row></div>
+
+    <div class="product-grid" data-product-grid></div>
+
+    <div class="empty-state" data-empty-state style="display:none">
+      <h3>No matches found</h3>
+      <p>Try a different search term or filter.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <h4 style="font-family:var(--font-display); font-size:1.2rem;">TheStrandBrand</h4>
+        <p style="color:var(--muted); max-width:320px; font-size:0.9rem;">
+          Premium wigs and hair bundles, sourced honestly and delivered across Ghana.
+        </p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="cart.html">Cart</a></li>
+          <li><a href="favorites.html">Favorites</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="about.html">About us</a></li>
+          <li><a href="track-order.html">Track an order</a></li>
+          <li><a href="admin.html">Admin</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; <span data-year></span> TheStrandBrand</span>
+      <span>Payments secured by Paystack</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================================================
+     SCRIPTS — order matters: config/products/storage load first
+     since the other files depend on them.
+     ============================================================ -->
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

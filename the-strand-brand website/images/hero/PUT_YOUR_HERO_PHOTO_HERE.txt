@@ -1,0 +1,12 @@
+Put your homepage background photo here, named exactly:
+
+    hero.jpg
+
+That's the only step — index.html is already set up to look for
+images/hero/hero.jpg. A wide, landscape photo (at least 1600px wide)
+works best, since it stretches across the full width of the screen
+behind the "Hair that holds its own." headline.
+
+If you'd rather keep a different file name, open index.html, find the
+<section class="hero" ...> line near the top, and change the
+background-image url() to match your file name.

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Favorites — TheStrandBrand</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a href="index.html" class="brand">TheStrandBrand</a>
+    <button class="nav-toggle" data-nav-toggle aria-label="Open menu">☰</button>
+    <ul class="nav-links" data-nav-links>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="track-order.html">Track Order</a></li>
+      <li>
+        <a href="favorites.html" class="nav-icon-link active" aria-label="Favorites">
+          ♡ <span class="badge-count" data-fav-badge style="display:none">0</span>
+        </a>
+      </li>
+      <li>
+        <a href="cart.html" class="nav-icon-link" aria-label="Cart">
+          🛍 <span class="badge-count" data-cart-badge style="display:none">0</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-label">Saved for later</div>
+    <div class="product-grid" data-fav-grid></div>
+    <div class="empty-state" data-fav-empty style="display:none">
+      <h3>No favorites yet</h3>
+      <p>Tap the heart on any product to save it here for later.</p>
+      <a href="index.html" class="btn btn-primary">Browse the collection</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>&copy; <span data-year></span> TheStrandBrand</span>
+      <span>Payments secured by Paystack</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/main.js"></script>
+<script src="js/favorites.js"></script>
+</body>
+</html>

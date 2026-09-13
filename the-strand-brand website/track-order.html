@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Your Order — TheStrandBrand</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a href="index.html" class="brand">TheStrandBrand</a>
+    <button class="nav-toggle" data-nav-toggle aria-label="Open menu">☰</button>
+    <ul class="nav-links" data-nav-links>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="track-order.html" class="active">Track Order</a></li>
+      <li>
+        <a href="favorites.html" class="nav-icon-link" aria-label="Favorites">
+          ♡ <span class="badge-count" data-fav-badge style="display:none">0</span>
+        </a>
+      </li>
+      <li>
+        <a href="cart.html" class="nav-icon-link" aria-label="Cart">
+          🛍 <span class="badge-count" data-cart-badge style="display:none">0</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</header>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-label">Track your order</div>
+    <p style="max-width:480px; color:var(--muted)">Enter the tracking ID we gave you at checkout, along with the email you ordered with.</p>
+
+    <form class="track-form" data-track-form>
+      <div class="field">
+        <label for="track-id">Tracking ID</label>
+        <input type="text" id="track-id" placeholder="e.g. CC-4F82A1" required>
+      </div>
+      <div class="field">
+        <label for="track-email">Email used at checkout</label>
+        <input type="email" id="track-email" placeholder="you@example.com" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Track order</button>
+    </form>
+
+    <div data-track-result style="max-width:480px;"></div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom">
+      <span>&copy; <span data-year></span> TheStrandBrand</span>
+      <span>Payments secured by Paystack</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/track-order.js"></script>
+</body>
+</html>

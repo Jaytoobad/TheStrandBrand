@@ -1,0 +1,853 @@
+/* =======================================================================
+   CROWN & COIL — MAIN STYLESHEET
+   -----------------------------------------------------------------------
+   Hey! This file is split into clearly labelled sections so you (the
+   store owner / future editor) can find things fast. Search for the
+   ALL-CAPS section headers below to jump around:
+
+   1. FONTS + DESIGN TOKENS  (colors, spacing, fonts — change the look here)
+   2. RESET / BASE STYLES
+   3. LAYOUT HELPERS
+   4. NAVIGATION
+   5. BUTTONS + FORM FIELDS
+   6. HERO SECTION (home page)
+   7. PRODUCT GRID + PRODUCT CARD
+   8. STOCK BADGES (in stock / limited / sold out)
+   9. CART + FAVORITES PAGES
+   10. TOASTS (little pop-up messages)
+   11. MODAL (quick view popup)
+   12. ABOUT PAGE
+   13. TRACK ORDER PAGE
+   14. ADMIN PAGE
+   15. FOOTER
+   16. RESPONSIVE (mobile) TWEAKS
+   ======================================================================= */
+
+
+/* -----------------------------------------------------------------------
+   1. FONTS + DESIGN TOKENS
+   -------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700&display=swap');
+
+:root{
+  /* --- Brand colors ---
+     Change these five values and the whole site re-colors itself.
+     Named after what they're inspired by, so they're easy to remember. */
+  --ink:        #2A1B14;   /* deep espresso brown — headlines + main text */
+  --muted:      #7A6A5D;   /* warm taupe — secondary text */
+  --bg:         #FAF6F0;   /* warm ivory — page background */
+  --surface:    #FFFFFF;   /* card / panel background */
+  --line:       #E7DACB;   /* hairline dividers + borders */
+  --accent:     #A9722E;   /* honey gold — buttons, links, highlights */
+  --accent-dark:#8C5D24;   /* darker gold for hover states */
+  --wine:       #6B2737;   /* deep wine — sale tags, limited stock */
+  --success:    #3F6B4A;   /* in stock green */
+  --danger:     #8C3A3A;   /* sold out red */
+
+  /* --- Type --- */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* --- Spacing scale (keeps rhythm consistent across the site) --- */
+  --space-xs: 0.5rem;
+  --space-sm: 1rem;
+  --space-md: 1.75rem;
+  --space-lg: 3rem;
+  --space-xl: 5rem;
+
+  /* --- Shape --- */
+  --radius: 3px;        /* we keep this small on purpose — see notes below */
+  --max-width: 1200px;
+}
+
+/* A quick design note: instead of rounded "SaaS cards" with drop shadows
+   everywhere, this site mostly uses thin hairline borders (--line) to
+   separate content. It reads calmer and a little more boutique/salon-like.
+   Feel free to change --radius to something bigger (e.g. 12px) if you'd
+   prefer a softer, more rounded look — one change updates every card. */
+
+
+/* -----------------------------------------------------------------------
+   2. RESET / BASE STYLES
+   -------------------------------------------------------------------- */
+*, *::before, *::after{ box-sizing: border-box; }
+
+html{ scroll-behavior: smooth; }
+
+body{
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+img{ max-width: 100%; display: block; }
+
+a{ color: inherit; text-decoration: none; }
+
+h1, h2, h3, h4{
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 0 0 var(--space-sm);
+  color: var(--ink);
+}
+
+h1{ font-size: clamp(2.2rem, 4vw + 1rem, 3.6rem); }
+h2{ font-size: clamp(1.6rem, 2vw + 1rem, 2.3rem); }
+h3{ font-size: 1.25rem; }
+
+p{ margin: 0 0 var(--space-sm); }
+
+/* Keyboard users deserve to see where focus is */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+
+/* -----------------------------------------------------------------------
+   3. LAYOUT HELPERS
+   -------------------------------------------------------------------- */
+.wrap{
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+.section{
+  padding: var(--space-xl) 0;
+}
+
+/* A hairline divider with a small label — used instead of the usual
+   ALL-CAPS "eyebrow" tag you see on generated sites. */
+.section-label{
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--muted);
+  font-size: 0.95rem;
+  margin-bottom: var(--space-md);
+}
+.section-label::after{
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.empty-state{
+  text-align: center;
+  padding: var(--space-xl) var(--space-sm);
+  color: var(--muted);
+}
+.empty-state h3{ color: var(--ink); margin-bottom: var(--space-xs); }
+
+
+/* -----------------------------------------------------------------------
+   4. NAVIGATION
+   -------------------------------------------------------------------- */
+.site-header{
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(250, 246, 240, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+
+.nav{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  gap: var(--space-md);
+}
+
+.brand{
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.brand span{ color: var(--accent); }
+
+.nav-links{
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links a{
+  font-size: 0.95rem;
+  color: var(--ink);
+  padding: 0.35rem 0;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+.nav-links a:hover, .nav-links a.active{
+  border-bottom-color: var(--accent);
+}
+
+.nav-links a.nav-icon-link{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  min-height: 2.8rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  box-shadow: 0 6px 14px rgba(20, 16, 14, 0.12);
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+  border-bottom-color: var(--ink);
+}
+
+.nav-links a.nav-icon-link:hover,
+.nav-links a.nav-icon-link:focus-visible{
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+  border-bottom-color: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+.badge-count{
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: var(--wine);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.nav-toggle{
+  display: none;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+}
+
+
+/* -----------------------------------------------------------------------
+   5. BUTTONS + FORM FIELDS
+   -------------------------------------------------------------------- */
+.btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.btn:active{ transform: scale(0.97); }
+
+.btn-primary{
+  background: var(--ink);
+  color: #fff;
+}
+.btn-primary:hover{ background: var(--accent-dark); }
+
+.btn-outline{
+  background: transparent;
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.btn-outline:hover{ background: var(--ink); color: #fff; }
+
+.btn-ghost{
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line);
+}
+.btn-ghost:hover{ border-color: var(--ink); }
+
+.btn-danger{
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-block{ width: 100%; }
+.btn[disabled]{ opacity: 0.5; cursor: not-allowed; }
+
+.field{
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: var(--space-sm);
+}
+.field label{ font-size: 0.9rem; color: var(--muted); }
+.field input, .field select, .field textarea{
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
+}
+
+/* Search bar on the home page */
+.search-bar{
+  display: flex;
+  gap: 0.5rem;
+  max-width: 520px;
+}
+.search-bar input{
+  flex: 1;
+  font-size: 1rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.search-bar button{
+  white-space: nowrap;
+}
+
+/* Category filter chips */
+.filter-row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: var(--space-md) 0;
+}
+.chip{
+  font-size: 0.85rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.15s ease;
+}
+.chip.active, .chip:hover{
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+
+/* -----------------------------------------------------------------------
+   6. HERO SECTION (home page)
+   -------------------------------------------------------------------- */
+.hero{
+  position: relative;
+  min-height: 78vh;
+  display: flex;
+  align-items: flex-end;
+  background-color: #EFE3D1; /* shows while you add your own photo */
+  background-image: var(--hero-image, none);
+  background-size: cover;
+  background-position: center;
+  border-bottom: 1px solid var(--line);
+}
+
+/* This dark gradient keeps the headline readable over any photo you drop in.
+   HOW TO ADD YOUR BACKGROUND IMAGE:
+   1. Put your photo in images/hero/hero.jpg
+   2. That's it — index.html already points to it. Swap the file any time. */
+.hero::before{
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(20,12,8,0.72) 0%, rgba(20,12,8,0.15) 55%, rgba(20,12,8,0) 100%);
+}
+
+.hero-content{
+  position: relative;
+  z-index: 1;
+  color: #fff;
+  padding: var(--space-xl) var(--space-md);
+  max-width: 640px;
+}
+.hero-content h1{ color: #fff; }
+.hero-content p{ color: rgba(255,255,255,0.85); font-size: 1.05rem; }
+
+.hero-search{
+  margin-top: var(--space-md);
+}
+.hero-search .search-bar input{
+  border: none;
+}
+
+
+/* -----------------------------------------------------------------------
+   7. PRODUCT GRID + PRODUCT CARD
+   -------------------------------------------------------------------- */
+.product-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--space-md);
+}
+
+.product-card{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.product-thumb{
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: #F1E8DA;
+}
+.product-thumb img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+.product-card:hover .product-thumb img{ transform: scale(1.04); }
+
+.fav-toggle{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+.fav-toggle:hover{ transform: scale(1.08); }
+.fav-toggle.is-active{ color: var(--wine); }
+
+.product-info{
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.product-type{
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.product-name{
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.product-price{
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: auto;
+}
+.product-price .old-price{
+  font-weight: 400;
+  color: var(--muted);
+  text-decoration: line-through;
+  margin-right: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.product-actions{
+  padding: 0 var(--space-sm) var(--space-sm);
+  display: flex;
+  gap: 0.5rem;
+}
+.product-actions .btn{ flex: 1; padding: 0.6rem 0.8rem; font-size: 0.88rem; }
+
+
+/* -----------------------------------------------------------------------
+   8. STOCK BADGES
+   -------------------------------------------------------------------- */
+.stock-badge{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  width: fit-content;
+}
+.stock-badge::before{
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+.stock-in{ background: rgba(63,107,74,0.12); color: var(--success); }
+.stock-low{ background: rgba(184,130,61,0.15); color: var(--accent-dark); }
+.stock-out{ background: rgba(140,58,58,0.12); color: var(--danger); }
+
+
+/* -----------------------------------------------------------------------
+   9. CART + FAVORITES PAGES
+   -------------------------------------------------------------------- */
+.cart-layout{
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.cart-line{
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+.cart-line img{
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+.cart-line-name{ font-family: var(--font-display); font-size: 1.05rem; }
+.cart-line-meta{ color: var(--muted); font-size: 0.85rem; }
+
+.qty-control{
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  width: fit-content;
+}
+.qty-control button{
+  background: none;
+  border: none;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.qty-control span{ width: 32px; text-align: center; display: inline-block; }
+
+.remove-link{
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.remove-link:hover{ color: var(--danger); }
+
+.summary-box{
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: var(--space-md);
+}
+.summary-row{
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
+}
+.summary-row.total{
+  font-weight: 700;
+  font-size: 1.15rem;
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+#checkout-email{ margin-bottom: var(--space-sm); }
+
+
+/* -----------------------------------------------------------------------
+   10. TOASTS
+   -------------------------------------------------------------------- */
+.toast-stack{
+  position: fixed;
+  bottom: var(--space-md);
+  right: var(--space-md);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.toast{
+  background: var(--ink);
+  color: #fff;
+  padding: 0.75rem 1.1rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  animation: toast-in 0.2s ease;
+  max-width: 280px;
+}
+@keyframes toast-in{
+  from{ opacity: 0; transform: translateY(8px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+
+
+/* -----------------------------------------------------------------------
+   11. MODAL (quick view popup)
+   -------------------------------------------------------------------- */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(20,12,8,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+  padding: var(--space-sm);
+}
+.modal-box{
+  background: #fff;
+  max-width: 640px;
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: var(--space-md);
+  position: relative;
+}
+.modal-close{
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--muted);
+}
+.modal-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+.modal-grid img{ width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+
+
+/* -----------------------------------------------------------------------
+   12. ABOUT PAGE
+   -------------------------------------------------------------------- */
+.values-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+.value-card{
+  border-left: 2px solid var(--accent);
+  padding-left: var(--space-sm);
+}
+.value-card h3{ margin-bottom: 0.3rem; }
+.value-card p{ color: var(--muted); font-size: 0.95rem; }
+
+.about-hero{
+  padding: var(--space-xl) 0 var(--space-lg);
+  border-bottom: 1px solid var(--line);
+}
+.about-hero p{ max-width: 620px; color: var(--muted); font-size: 1.05rem; }
+
+
+/* -----------------------------------------------------------------------
+   13. TRACK ORDER PAGE
+   -------------------------------------------------------------------- */
+.track-form{
+  max-width: 480px;
+  border: 1px solid var(--line);
+  padding: var(--space-md);
+  background: var(--surface);
+}
+
+.timeline{
+  list-style: none;
+  margin: var(--space-md) 0 0;
+  padding: 0;
+}
+.timeline li{
+  position: relative;
+  padding: 0 0 var(--space-md) var(--space-md);
+  border-left: 2px solid var(--line);
+  margin-left: 6px;
+}
+.timeline li:last-child{ border-color: transparent; }
+.timeline li::before{
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--line);
+  border: 2px solid var(--bg);
+}
+.timeline li.done::before{ background: var(--success); }
+.timeline li.current::before{ background: var(--accent); }
+.timeline .step-label{ font-weight: 700; }
+.timeline .step-date{ font-size: 0.82rem; color: var(--muted); }
+
+
+/* -----------------------------------------------------------------------
+   14. ADMIN PAGE
+   -------------------------------------------------------------------- */
+.admin-stats{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+.stat-card{
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: var(--space-sm) var(--space-md);
+}
+.stat-card .stat-number{
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  display: block;
+}
+.stat-card .stat-label{ color: var(--muted); font-size: 0.85rem; }
+
+.admin-table{
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+}
+.admin-table th, .admin-table td{
+  text-align: left;
+  padding: 0.7rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.9rem;
+}
+.admin-table th{ color: var(--muted); font-weight: 600; }
+.admin-table select{
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--line);
+}
+
+.tabs{
+  display: flex;
+  gap: var(--space-sm);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--space-md);
+}
+.tab-btn{
+  background: none;
+  border: none;
+  padding: 0.7rem 0.2rem;
+  cursor: pointer;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.tab-btn.active{ color: var(--ink); border-color: var(--accent); }
+.tab-panel{ display: none; }
+.tab-panel.active{ display: block; }
+
+.login-box{
+  max-width: 360px;
+  margin: var(--space-xl) auto;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: var(--space-md);
+}
+
+
+/* -----------------------------------------------------------------------
+   15. FOOTER
+   -------------------------------------------------------------------- */
+.site-footer{
+  border-top: 1px solid var(--line);
+  padding: var(--space-lg) 0;
+  margin-top: var(--space-xl);
+}
+.footer-grid{
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-md);
+}
+.footer-grid h4{ font-size: 0.95rem; margin-bottom: 0.6rem; }
+.footer-grid ul{ list-style: none; padding: 0; margin: 0; }
+.footer-grid li{ margin-bottom: 0.4rem; }
+.footer-grid a{ color: var(--muted); font-size: 0.9rem; }
+.footer-grid a:hover{ color: var(--ink); }
+.footer-bottom{
+  margin-top: var(--space-lg);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.82rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+
+/* -----------------------------------------------------------------------
+   16. RESPONSIVE (mobile) TWEAKS
+   -------------------------------------------------------------------- */
+@media (max-width: 860px){
+  .cart-layout{ grid-template-columns: 1fr; }
+  .modal-grid{ grid-template-columns: 1fr; }
+  .footer-grid{ grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 700px){
+  .nav-toggle{ display: inline-flex; }
+  .nav-links{
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
+    display: none;
+  }
+  .nav-links.open{ display: flex; }
+  .footer-grid{ grid-template-columns: 1fr; }
+}

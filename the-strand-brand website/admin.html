@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — TheStrandBrand</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-admin-app>
+
+<header class="site-header">
+  <div class="wrap nav">
+    <a href="index.html" class="brand">TheStrandBrand</a>
+    <span style="color:var(--muted); font-size:0.9rem;">Admin dashboard</span>
+  </div>
+</header>
+
+<!-- ============================================================
+     LOGIN GATE
+     Change the password in js/config.js (adminPassword).
+     This is a simple front-end lock meant to keep casual visitors
+     out — see the note in js/storage.js about adding a real backend
+     with proper authentication before this store handles real
+     customers at scale.
+     ============================================================ -->
+<div class="login-box" data-admin-login>
+  <h2>Admin sign in</h2>
+  <p style="color:var(--muted); font-size:0.9rem;">This page is only for the store owner.</p>
+  <form data-admin-login-form>
+    <div class="field">
+      <label for="admin-password">Password</label>
+      <input type="password" id="admin-password" required>
+    </div>
+    <p style="color:var(--danger); display:none; font-size:0.9rem;" data-admin-login-error>
+      That password isn't right — try again.
+    </p>
+    <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+  </form>
+</div>
+
+<!-- ============================================================
+     DASHBOARD (hidden until the password above is correct)
+     ============================================================ -->
+<div data-admin-dashboard style="display:none">
+  <section class="section">
+    <div class="wrap">
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="section-label" style="flex:1">Overview</div>
+        <button class="btn btn-ghost" data-admin-logout style="margin-left:1rem">Sign out</button>
+      </div>
+
+      <div class="admin-stats" data-admin-stats></div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="orders">Orders</button>
+        <button class="tab-btn" data-tab="inventory">Inventory</button>
+      </div>
+
+      <div class="tab-panel active" data-tab-panel="orders">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Tracking ID</th>
+              <th>Customer email</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody data-orders-tbody></tbody>
+        </table>
+      </div>
+
+      <div class="tab-panel" data-tab-panel="inventory">
+        <p style="color:var(--muted); font-size:0.9rem;">
+          Stock numbers start from js/products.js and go down automatically as
+          orders come in. Use the box below to correct a number by hand
+          (e.g. after a restock or a physical stock count), then hit Save.
+        </p>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Type</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Available</th>
+            </tr>
+          </thead>
+          <tbody data-inventory-tbody></tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/products.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui-common.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
