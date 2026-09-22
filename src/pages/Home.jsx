@@ -38,7 +38,19 @@ export default function Home() {
     <div>
       <HeroSlider />
 
-      <section className="brand-story"><div className="container brand-story-inner"> <img src="/assets/hro-placeholder-2.jpg" alt="TheStrandBrand"/> <div className="brand-story-text"> <span classNmae="brand-story-label">The Collection </span> <h2>Made for the modern woman</h2> <p>Every wig is chosen for how it wears, not just how it looks - breathable lace, true-to-density, and colours that suit real skin tones. Priced in cedis, delivered across Ghana.</p><a href="/shop"className="btn btn-outline">Explore the collection</a> </div></div> </section>
+      <section className="brand-story">
+        <div className="container brand-story-inner">
+          <img src="/assets/hero-placeholder-2.jpg" alt="TheStrandBrand" />
+          <div className="brand-story-text">
+            <span className="brand-story-label">The Collection</span>
+            <h2>Made for the modern woman</h2>
+            <p>Every wig is chosen for how it wears, not just how it looks — breathable lace, true-to-life density, and colours that suit real skin tones. Priced in cedis, delivered across Ghana.</p>
+            <a href="/shop" className="btn btn-outline">Explore the collection</a>
+          </div>
+        </div>
+      </section>
+
+      <section className="section container">
         <h2 className="section-title">Shop By Category</h2>
         {loading ? (
           <div className="category-grid">
@@ -75,7 +87,7 @@ export default function Home() {
             <Link to="/shop?filter=bestsellers" className="btn btn-outline btn-sm">View All</Link>
           </div>
           <div className="product-grid">
-            {featured.map((p) => <ProductCard key={p.id} pro"duc"t={p} />}
+            {featured.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         </section>
       )}
