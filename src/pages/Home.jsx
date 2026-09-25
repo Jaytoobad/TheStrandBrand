@@ -4,8 +4,29 @@ import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
 import { fetchCategories, fetchProducts } from '../services/products';
 import { useToast } from '../context/ToastContext';
+import { useEffect } from 'react';
+
+// Sets the browser tab title and the page's meta description.
+// Call it once near the top of any page component, e.g.:
+//   usePageMeta('Shop All', 'Browse premium wigs — body wave, bone straight, curly and more.');
+export default function usePageMeta(title, description) {
+  useEffect(() => {
+    document.title = title ? `${title} | TheStrandBrand` : 'TheStrandBrand — Your Hair. Your Crown.';
+
+    if (description) {
+      let tag = document.querySelector('meta[name="description"]');
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('name', 'description');
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', description);
+    }
+  }, [title, description]);
+}
 
 export default function Home() {
+  usePageMeta('Home', 'Premium wigs for the modern woman — shop body wave, bone straight, curly and more, delivered across Ghana.');
   const [categories, setCategories] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [featured, setFeatured] = useState([]);

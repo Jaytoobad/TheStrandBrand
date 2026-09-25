@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { formatMoney, siteConfig } from '../config/siteConfig';
+import usePageMeta from '../hooks/usePageMeta';
 
 export default function Cart() {
+  usePageMeta('Cart', 'Review your cart items and proceed to checkout.');
   const { items, updateQuantity, removeItem, subtotal } = useCart();
   const deliveryFee = items.length ? siteConfig.defaultDeliveryFee : 0;
   const total = subtotal + deliveryFee;

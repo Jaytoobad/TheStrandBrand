@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { signUp } from '../services/auth';
 import { useToast } from '../context/ToastContext';
+import usePageMeta from '../hooks/usePageMeta';
 import { friendlyAuthError } from './Login';
+import posthog, { isPostHogConfigured } from '../lib/posthog';
 
 export default function Register() {
+  usePageMeta('Create Account', 'Register for a TheStrandBrand account to track orders and save your details.'); 
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', phone: '', password: '', confirm: '' });
   const [loading, setLoading] = useState(false);
   const [verifySent, setVerifySent] = useState(false);
@@ -19,9 +22,18 @@ export default function Register() {
     if (form.password.length < 8) { showToast('Password must be at least 8 characters.', 'error'); return; }
     setLoading(true);
     try {
-      await signUp(form);
+      const { user } = await signUp(form);
+      if (user && isPostHogConfigured) {
+        posthog.identify(user.id, {
+          email: user.email,
+          name: `${form.firstName} ${form.lastName}`.trim(),
+          phone: form.phone,
+        });
+        posthog.capture('account_registered', { method: 'password' });
+      }
       setVerifySent(true);
     } catch (err) {
+      if (isPostHogConfigured) posthog.captureException(err);
       showToast(friendlyAuthError(err), 'error');
     } finally {
       setLoading(false);

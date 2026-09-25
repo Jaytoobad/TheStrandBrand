@@ -1,5 +1,7 @@
+ import usePageMeta from '../hooks/usePageMeta'; 
 export default function About() {
-  return (
+  usePageMeta('About', 'Learn more about TheStrandBrand and our commitment to providing premium wigs for the modern woman.');
+return (
     <div className="container section content-page">
       <h1>About TheStrandBrand</h1>
       <p>TheStrandBrand was founded on a simple belief: every woman deserves hair that makes her feel like herself, only more so. We source and craft premium wigs that are as comfortable to wear as they are beautiful to look at.</p>

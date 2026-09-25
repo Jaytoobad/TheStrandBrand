@@ -1,3 +1,4 @@
+import { getPostHogHeaders } from '../lib/posthog';
 import { supabase } from '../lib/supabaseClient';
 
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
@@ -9,7 +10,7 @@ const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 export async function initializePayment(payload) {
   const res = await fetch(`${FUNCTIONS_BASE}/initialize-payment`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getPostHogHeaders() },
     body: JSON.stringify(payload),
   });
   const data = await res.json();
@@ -20,7 +21,7 @@ export async function initializePayment(payload) {
 export async function verifyPayment(reference) {
   const res = await fetch(`${FUNCTIONS_BASE}/verify-payment`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getPostHogHeaders() },
     body: JSON.stringify({ reference }),
   });
   const data = await res.json();

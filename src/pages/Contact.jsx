@@ -1,6 +1,9 @@
 import { siteConfig, whatsappUrl } from '../config/siteConfig';
+import usePageMeta from '../hooks/usePageMeta';
 
 export default function Contact() {
+  usePageMeta('Contact', 'Get in touch with us for any inquiries or assistance.');
+
   return (
     <div className="container section content-page">
       <h1>Contact Us</h1>

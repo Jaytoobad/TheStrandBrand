@@ -1,3 +1,4 @@
+import usePageMeta from '../hooks/usePageMeta';
 const faqs = [
   { q: 'How do I order?', a: 'Browse the shop, add your favourite wigs to your cart, and check out securely with Paystack. You can also check out as a guest without creating an account.' },
   { q: 'What payment methods are available?', a: 'We accept card payments and Mobile Money through Paystack.' },
@@ -10,6 +11,7 @@ const faqs = [
 ];
 
 export default function FAQ() {
+   usePageMeta('FAQ', 'Answers to common questions about ordering, delivery, and returns.');
   return (
     <div className="container section content-page">
       <h1>Frequently Asked Questions</h1>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { trackOrder } from '../services/orders';
 import { formatMoney } from '../config/siteConfig';
+ import usePageMeta from '../hooks/usePageMeta';
 
 const STATUS_STEPS = ['paid', 'processing', 'packaged', 'dispatched', 'in_transit', 'delivered'];
 const STATUS_LABELS = {
@@ -17,6 +18,7 @@ const STATUS_LABELS = {
 };
 
 export default function TrackOrder() {
+  usePageMeta('Track Your Order', 'Enter your order number to check your delivery status.');
   const [searchParams] = useSearchParams();
   const [orderNumber, setOrderNumber] = useState(searchParams.get('order') || '');
   const [contact, setContact] = useState('');

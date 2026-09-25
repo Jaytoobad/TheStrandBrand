@@ -3,8 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { fetchCategories, fetchProducts } from '../services/products';
 import { useToast } from '../context/ToastContext';
+import usePageMeta from '../hooks/usePageMeta';
 
 export default function Shop() {
+  usePageMeta('Shop', 'Browse premium wigs — body wave, bone straight, curly and more.');
   const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);

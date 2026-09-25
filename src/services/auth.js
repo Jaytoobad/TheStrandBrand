@@ -1,3 +1,4 @@
+import posthog, { isPostHogConfigured } from '../lib/posthog';
 import { supabase } from '../lib/supabaseClient';
 
 export async function signUp({ email, password, firstName, lastName, phone }) {
@@ -23,6 +24,7 @@ export async function signIn({ email, password }) {
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
+  if (isPostHogConfigured) posthog.reset();
 }
 
 export async function requestPasswordReset(email) {

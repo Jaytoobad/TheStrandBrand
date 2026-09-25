@@ -4,7 +4,9 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatMoney, siteConfig } from '../config/siteConfig';
+import usePageMeta from '../hooks/usePageMeta';
 import { initializePayment } from '../services/orders';
+import posthog, { isPostHogConfigured } from '../lib/posthog';
 
 const GHANA_REGIONS = [
   'Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta',
@@ -13,6 +15,7 @@ const GHANA_REGIONS = [
 ];
 
 export default function Checkout() {
+  usePageMeta('Checkout', 'Complete your purchase and get your order delivered.');
   const { items, subtotal, clearCart } = useCart();
   const { user, profile } = useAuth();
   const { showToast } = useToast();
@@ -41,6 +44,14 @@ export default function Checkout() {
   async function handleSubmit(e) {
     e.preventDefault();
     setSubmitting(true);
+    if (isPostHogConfigured) {
+      posthog.capture('checkout_started', {
+        item_count: items.reduce((sum, item) => sum + item.quantity, 0),
+        order_total: total,
+        currency: 'GHS',
+        authenticated: Boolean(user),
+      });
+    }
     try {
       const payload = {
         userId: user?.id ?? null,
@@ -63,6 +74,13 @@ export default function Checkout() {
       clearCart();
       window.location.href = result.authorizationUrl;
     } catch (err) {
+      if (isPostHogConfigured) {
+        posthog.capture('checkout_start_failed', {
+          item_count: items.reduce((sum, item) => sum + item.quantity, 0),
+          authenticated: Boolean(user),
+        });
+        posthog.captureException(err);
+      }
       showToast(err.message || 'Could not start checkout. Please try again.', 'error');
       setSubmitting(false);
     }

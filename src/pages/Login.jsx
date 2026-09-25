@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { signIn } from '../services/auth';
 import { useToast } from '../context/ToastContext';
+ import usePageMeta from '../hooks/usePageMeta';
+import posthog, { isPostHogConfigured } from '../lib/posthog';
 
 export default function Login() {
+  usePageMeta('Login', 'Log in to your TheStrandBrand account.');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,9 +18,14 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
-      await signIn({ email, password });
+      const { user } = await signIn({ email, password });
+      if (isPostHogConfigured) {
+        posthog.identify(user.id, { email: user.email });
+        posthog.capture('user_logged_in', { method: 'password' });
+      }
       navigate(location.state?.from?.pathname || '/account');
     } catch (err) {
+      if (isPostHogConfigured) posthog.captureException(err);
       showToast(friendlyAuthError(err), 'error');
     } finally {
       setLoading(false);

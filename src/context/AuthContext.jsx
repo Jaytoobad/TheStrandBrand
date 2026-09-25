@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import posthog, { isPostHogConfigured } from '../lib/posthog';
 import { fetchProfile } from '../services/auth';
 
 const AuthContext = createContext(null);
@@ -14,6 +15,14 @@ export function AuthProvider({ children }) {
     try {
       const p = await fetchProfile(u.id);
       setProfile(p);
+      if (isPostHogConfigured) {
+        posthog.identify(u.id, {
+          email: u.email,
+          name: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+          phone: p.phone,
+          role: p.role,
+        });
+      }
     } catch {
       setProfile(null);
     }

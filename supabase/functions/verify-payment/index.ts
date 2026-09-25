@@ -11,6 +11,7 @@
 // ============================================================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { captureServerEvent } from '../_shared/posthog.ts';
 
 const PAYSTACK_SECRET_KEY = Deno.env.get('PAYSTACK_SECRET_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -19,7 +20,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-posthog-distinct-id, x-posthog-session-id',
 };
 
 Deno.serve(async (req) => {
@@ -57,10 +58,20 @@ export async function verifyAndFulfil(reference: string) {
     headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
   });
   const verifyData = await verifyRes.json();
+  const posthogDistinctId = verifyData.data?.metadata?.posthog_distinct_id ?? payment.orders.user_id ?? `order:${payment.order_id}`;
+  const posthogSessionId = verifyData.data?.metadata?.posthog_session_id;
+  const sessionProperties = posthogSessionId ? { $session_id: posthogSessionId } : {};
 
-  if (!verifyData.status || verifyData.data.status !== 'success') {
+  if (!verifyData.status || verifyData.data?.status !== 'success') {
     await supabase.from('payments').update({ status: 'failed', paystack_raw: verifyData }).eq('reference', reference);
     await supabase.from('orders').update({ payment_status: 'failed' }).eq('id', payment.order_id);
+    await captureServerEvent(posthogDistinctId, 'payment_failed', {
+      order_id: payment.order_id,
+      order_total: Number(payment.amount),
+      currency: payment.currency,
+      failure_reason: 'provider_status',
+      ...sessionProperties,
+    });
     return { error: 'Payment was not successful.' };
   }
 
@@ -69,6 +80,13 @@ export async function verifyAndFulfil(reference: string) {
   const expectedAmount = Math.round(Number(payment.amount) * 100);
   if (verifyData.data.amount !== expectedAmount) {
     console.error('Amount mismatch on reference', reference);
+    await captureServerEvent(posthogDistinctId, 'payment_failed', {
+      order_id: payment.order_id,
+      order_total: Number(payment.amount),
+      currency: payment.currency,
+      failure_reason: 'amount_mismatch',
+      ...sessionProperties,
+    });
     return { error: 'Payment amount could not be verified.' };
   }
 
@@ -112,6 +130,15 @@ export async function verifyAndFulfil(reference: string) {
     title: 'Payment successful',
     body: `Your order ${payment.orders.order_number} has been confirmed and is being processed.`,
   }).select(); // no-op if user_id is null (guest order) — insert will simply be skipped by RLS/constraint in that case
+
+  await captureServerEvent(posthogDistinctId, 'payment_succeeded', {
+    order_id: payment.order_id,
+    order_total: Number(payment.amount),
+    item_count: (items ?? []).reduce((sum, item) => sum + item.quantity, 0),
+    currency: payment.currency,
+    payment_channel: verifyData.data.channel,
+    ...sessionProperties,
+  });
 
   return { orderNumber: payment.orders.order_number, status: 'paid' };
 }

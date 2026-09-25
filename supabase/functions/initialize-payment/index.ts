@@ -14,6 +14,7 @@
 // ============================================================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { captureServerEvent } from '../_shared/posthog.ts';
 
 const PAYSTACK_SECRET_KEY = Deno.env.get('PAYSTACK_SECRET_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -26,7 +27,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-posthog-distinct-id, x-posthog-session-id',
 };
 
 function orderNumber() {
@@ -42,6 +43,8 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const { items, customer, delivery, userId } = body;
+    const posthogDistinctId = req.headers.get('x-posthog-distinct-id');
+    const posthogSessionId = req.headers.get('x-posthog-session-id');
     // items: [{ productId, variantId, quantity }]
     // customer: { name, email, phone }
     // delivery: { region, city, area, digitalAddress, directions, fee }
@@ -158,7 +161,12 @@ Deno.serve(async (req) => {
         email: customer.email,
         amount: Math.round(total * 100), // Paystack expects amount in pesewas (kobo-equivalent for GHS)
         currency: 'GHS',
-        metadata: { order_id: order.id, order_number: order.order_number },
+        metadata: {
+          order_id: order.id,
+          order_number: order.order_number,
+          posthog_distinct_id: posthogDistinctId,
+          posthog_session_id: posthogSessionId,
+        },
       }),
     });
 
@@ -179,6 +187,14 @@ Deno.serve(async (req) => {
       .from('orders')
       .update({ payment_reference: paystackData.data.reference })
       .eq('id', order.id);
+
+    await captureServerEvent(posthogDistinctId ?? userId ?? `order:${order.id}`, 'payment_initialized', {
+      order_id: order.id,
+      order_total: total,
+      item_count: lineItems.reduce((sum, item) => sum + item.quantity, 0),
+      currency: 'GHS',
+      ...(posthogSessionId ? { $session_id: posthogSessionId } : {}),
+    });
 
     return json({
       authorizationUrl: paystackData.data.authorization_url,

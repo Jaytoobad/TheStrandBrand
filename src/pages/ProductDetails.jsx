@@ -2,11 +2,14 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchProductBySlug, fetchApprovedReviews } from '../services/products';
 import { formatMoney } from '../config/siteConfig';
+import posthog, { isPostHogConfigured } from '../lib/posthog';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import PageLoader from '../components/PageLoader';
+ import usePageMeta from '../hooks/usePageMeta';
 
 export default function ProductDetails() {
+  usePageMeta(product?.name, product?.description);
   const { slug } = useParams();
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -76,6 +79,16 @@ export default function ProductDetails() {
       return;
     }
     addItem(product, selectedVariant, quantity);
+    if (isPostHogConfigured) {
+      posthog.capture('product_added_to_cart', {
+        product_id: product.id,
+        category: product.categories?.name,
+        variant_id: selectedVariant?.id,
+        quantity,
+        unit_price: finalPrice,
+        currency: 'GHS',
+      });
+    }
     showToast('Added to cart');
   }
 
