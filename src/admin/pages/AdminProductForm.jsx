@@ -5,6 +5,7 @@ import {
   uploadProductImage, fetchAllCategories,
 } from '../../services/admin';
 import { useToast } from '../../context/ToastContext';
+ import { compressImage } from '../../lib/imageCompression';
 import PageLoader from '../../components/PageLoader';
 
 function slugify(str) {
@@ -54,8 +55,8 @@ export default function AdminProductForm() {
       const uploaded = [];
       for (const file of files) {
         if (!file.type.startsWith('image/')) { showToast(`${file.name} is not an image.`, 'error'); continue; }
-        if (file.size > 5 * 1024 * 1024) { showToast(`${file.name} is larger than 5MB.`, 'error'); continue; }
-        const url = await uploadProductImage(file, tempId);
+        if (file.size > 15 * 1024 * 1024) { showToast(`${file.name} is larger than 15MB.`, 'error'); continue; }
+        const compressed = await compressImage(file); const url = await uploadProductImage(compressed, tempId);
         uploaded.push(url);
       }
       setImages((prev) => [
