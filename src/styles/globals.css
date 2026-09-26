@@ -445,6 +445,7 @@ html, body { overflow-x: hidden; }
   grid-template-columns: repeat(2, 1fr);
 }
 @media (min-width: 700px) { .category-grid { grid-template-columns: repeat(4, 1fr); } }
+
 .category-tile {
   position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 4/5; display: block; min-width: 0;
   background: var(--color-bg);
