@@ -360,6 +360,24 @@ html, body { overflow-x: hidden; }
 }
 .wishlist-btn:hover { transform: scale(1.08); }
 .wishlist-btn.active { color: var(--color-primary); }
+@media (max-width: 640px) {
+  .product-card-badges {
+    top: 8px;
+    left: 8px;
+    gap: 5px;
+  }
+  .wishlist-btn {
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    font-size: 0.95rem;
+  }
+  .badge {
+    padding: 2px 7px;
+    font-size: 0.62rem;
+  }
+}
 .product-card-body { padding: 12px 2px; }
 .product-card-category { font-size: 0.72rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .product-card-name { font-size: 1rem; margin: 3px 0 6px; overflow-wrap:break-word; }
