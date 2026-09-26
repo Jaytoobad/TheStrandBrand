@@ -14,7 +14,7 @@ initializePostHog();
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <PostHogProvider client={posthog}>
-      <PostHogErrorBoundary>
+      <PostHogErrorBoundary fallback={<div style={{ padding: 60, textAlign: 'center' }}>Something went wrong. Please refresh the page.</div>}>
         <BrowserRouter>
           <ToastProvider>
             <AuthProvider>
