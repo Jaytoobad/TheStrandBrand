@@ -1,4 +1,5 @@
 import usePageMeta from '../hooks/usePageMeta';
+import { useLocation } from 'react-router-dom';
 const faqs = [
   { q: 'How do I order?', a: 'Browse the shop, add your favourite wigs to your cart, and check out securely with Paystack. You can also check out as a guest without creating an account.' },
   { q: 'What payment methods are available?', a: 'We accept card payments and Mobile Money through Paystack.' },
@@ -12,13 +13,13 @@ const faqs = [
 
 export default function FAQ() {
    usePageMeta('FAQ', 'Answers to common questions about ordering, delivery, and returns.');
+   const location = useLocation(); const activeId = location.hash.replace('#', '');
   return (
     <div className="container section content-page">
       <h1>Frequently Asked Questions</h1>
       <div className="faq-list">
         {faqs.map((f) => (
-          <details key={f.q} id={f.id} className="faq-item">
-            <summary>{f.q}</summary>
+         <details key={f.q} id={f.id} open={f.id === activeId ? true : undefined} className="faq-item">
             <p>{f.a}</p>
           </details>
         ))}
