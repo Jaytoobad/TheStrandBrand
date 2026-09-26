@@ -275,6 +275,7 @@ html, body { overflow-x: hidden; }
   box-shadow: var(--shadow-md);
   transition: transform var(--transition-fast);
 }
+ @media (max-width: 640px) { .whatsapp-fab { width: 46px; height: 46px; bottom: 16px; left: 16px; } .whatsapp-fab svg { width: 20px; height: 20px; } } 
 .whatsapp-fab:hover { transform: scale(1.06); }
 
 /* ============================= HERO ============================= */
@@ -341,7 +342,7 @@ html, body { overflow-x: hidden; }
   background: var(--color-border);
 }
 .product-card-image img {
-  width: 100%; height: 100%; object-fit: cover;
+  width: 100%; height: 100%; object-fit: contain; and add background: #fff;
   transition: transform var(--transition-base);
 }
 .product-card:hover .product-card-image img { transform: scale(1.04); }
