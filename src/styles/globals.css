@@ -363,7 +363,7 @@ html, body { overflow-x: hidden; }
 .wishlist-btn.active { color: var(--color-primary); }
 @media (max-width: 640px) {
   .product-card-image { padding: 0 8px; }
-  .category-title { padding: 0 8px; }
+  .category-tile { padding: 0 8px; }
   .product-card-badges {
     top: 8px;
     left: 8px;
@@ -393,10 +393,7 @@ html, body { overflow-x: hidden; }
     height: 28px;
     font-size: 0.95rem;
   }
-  .badge {
-    padding: 2px 7px;
-    font-size: 0.62rem;
-  }
+  
 
 .product-card-body { padding: 12px 2px; }
 .product-card-category { font-size: 0.72rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
