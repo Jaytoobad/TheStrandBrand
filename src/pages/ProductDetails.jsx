@@ -9,7 +9,6 @@ import PageLoader from '../components/PageLoader';
  import usePageMeta from '../hooks/usePageMeta';
 
 export default function ProductDetails() {
-  usePageMeta(product?.name, product?.description);
   const { slug } = useParams();
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -20,6 +19,7 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
   const { showToast } = useToast();
+  usePageMeta(product?.name, product?.description);
 
   useEffect(() => {
     let active = true;
