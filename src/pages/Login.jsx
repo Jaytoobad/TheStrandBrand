@@ -99,5 +99,6 @@ export function friendlyAuthError(err) {
   if (msg.includes('Invalid login credentials')) return 'Incorrect email or password.';
   if (msg.includes('Email not confirmed')) return 'Please verify your email before logging in.';
   if (msg.includes('already registered')) return 'An account with this email already exists.';
+  if (err?.code === 'email_address_invalid' || /Email address .* is invalid/.test(msg)) return 'Please enter a valid email address.';
   return 'Something went wrong. Please try again.';
 }
