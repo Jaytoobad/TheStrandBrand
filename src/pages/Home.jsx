@@ -52,7 +52,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section container">
+      <section className="section container tinted-section">
         <h2 className="section-title">Shop By Category</h2>
         {loading ? (
           <div className="category-grid">
@@ -71,7 +71,7 @@ export default function Home() {
       </section>
 
       {(loading || newArrivals.length > 0) && (
-        <section className="section container">
+        <section className="section container tinted-section">
           <div className="section-header">
             <h2 className="section-title">New Arrivals</h2>
             <Link to="/shop?filter=new" className="btn btn-outline btn-sm">View All</Link>
@@ -89,7 +89,7 @@ export default function Home() {
       )}
 
       {(loading || featured.length > 0) && (
-        <section className="section container">
+        <section className="section container tinted-section">
           <div className="section-header">
             <h2 className="section-title">Best Sellers</h2>
             <Link to="/shop?filter=bestsellers" className="btn btn-outline btn-sm">View All</Link>
