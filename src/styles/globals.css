@@ -425,7 +425,7 @@ html, body { overflow-x: hidden; }
 .price-current { font-weight: 700; color: var(--color-black); font-size: 1rem; order: 1; }
 
 /* ============================= FOOTER ============================= */
-.site-footer { background: var(--color-black); color: #d8cfc9; margin-top: 0; padding: 60px 0 0 ; position: relative; }
+.site-footer { background: var(--color-black); color: #d8cfc9; margin-top: 0; padding: 60px 0 60px; position: relative; }
 .site-footer::before { content: ""; display: block; height: 80px; background: var(--color-bg); }
 .footer-grid {
   display: grid; gap: 32px;
