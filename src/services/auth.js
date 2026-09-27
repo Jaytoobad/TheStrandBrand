@@ -1,5 +1,12 @@
 import posthog, { isPostHogConfigured } from '../lib/posthog';
+import { isAuthApiError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
+
+// 4xx auth errors come from user input (wrong password, unconfirmed email,
+// already registered), so they are not worth reporting to error tracking.
+export function isExpectedAuthError(err) {
+  return isAuthApiError(err) && err.status >= 400 && err.status < 500;
+}
 
 export async function signUp({ email, password, firstName, lastName, phone }) {
   const { data, error } = await supabase.auth.signUp({
