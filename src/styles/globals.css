@@ -423,6 +423,25 @@ html, body { overflow-x: hidden; }
 @media (min-width: 700px) {
   .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
 }
+@media (max-width: 640px) {
+  .site-footer {
+    margin-top: 50px;
+    padding: 36px 0 0;
+  }
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .footer-brand,
+  .footer-desc,
+  .footer-social {
+    grid-column: 1 / -1;
+  }
+  .footer-bottom {
+    margin-top: 24px;
+    padding: 16px 20px;
+  }
+}
 
 .spinner {
   width: 34px; height: 34px; border-radius: 50%;
