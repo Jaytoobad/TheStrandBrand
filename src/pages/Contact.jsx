@@ -13,14 +13,17 @@ export default function Contact() {
         <a href={whatsappUrl()} target="_blank" rel="noreferrer" className="contact-card card">
           <h3>WhatsApp</h3>
           <p>Chat with us for quick answers about products and orders.</p>
+          <span className="visually-hidden">(opens in a new tab)</span>
         </a>
         <a href={`mailto:${siteConfig.contactEmail}`} className="contact-card card">
           <h3>Email</h3>
           <p>{siteConfig.contactEmail}</p>
+          <span className="visually-hidden">(opens your email app)</span>
         </a>
         <a href={siteConfig.instagramUrl} target="_blank" rel="noreferrer" className="contact-card card">
           <h3>Instagram</h3>
           <p>Follow us for new arrivals and styling inspiration.</p>
+          <span className="visually-hidden">(opens in a new tab)</span>
         </a>
       </div>
     </div>
