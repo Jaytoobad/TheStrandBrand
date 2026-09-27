@@ -10,7 +10,7 @@
   --color-black: #000000;
   --color-gold: #b98d4f;
 
-  --color-bg: var(--color-cream);
+  --color-bg:#dfbdbb; ;
   --color-surface: #ffffff;
   --color-text: var(--color-black);
   --color-text-muted: #6b5f5a;
