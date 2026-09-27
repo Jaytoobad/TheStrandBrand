@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { signIn } from '../services/auth';
+import { signIn, isExpectedAuthError } from '../services/auth';
 import { useToast } from '../context/ToastContext';
  import usePageMeta from '../hooks/usePageMeta';
 import posthog, { isPostHogConfigured } from '../lib/posthog';
@@ -49,7 +49,7 @@ export default function Login() {
       }
       navigate(location.state?.from?.pathname || '/account');
     } catch (err) {
-      if (isPostHogConfigured) posthog.captureException(err);
+      if (isPostHogConfigured && !isExpectedAuthError(err)) posthog.captureException(err);
       showToast(friendlyAuthError(err), 'error');
     } finally {
       setLoading(false);

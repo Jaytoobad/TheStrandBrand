@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signUp } from '../services/auth';
+import { signUp, isExpectedAuthError } from '../services/auth';
 import { useToast } from '../context/ToastContext';
 import usePageMeta from '../hooks/usePageMeta';
 import { friendlyAuthError } from './Login';
@@ -74,7 +74,7 @@ export default function Register() {
       }
       setVerifySent(true);
     } catch (err) {
-      if (isPostHogConfigured) posthog.captureException(err);
+      if (isPostHogConfigured && !isExpectedAuthError(err)) posthog.captureException(err);
       showToast(friendlyAuthError(err), 'error');
     } finally {
       setLoading(false);
