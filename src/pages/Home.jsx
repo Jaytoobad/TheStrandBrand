@@ -110,7 +110,7 @@ export default function Home() {
         <div className="container">
           <h2>Find A Style That Feels Like You.</h2>
           <p>Quality strands. Effortless confidence.</p>
-          <Link to="/shop" className="btn btn-primary">Shop The Collection</Link>
+          <Link to="/shop" className="btn btn-light-contrast">Shop The Collection</Link> 
         </div>
       </section>
     </div>

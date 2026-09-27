@@ -20,7 +20,6 @@ export default function Navbar() {
 
   const navLinks = [
     { to: '/', label: 'Home' },
-    { to: '/shop', label: 'Shop' },
     { to: '/shop', label: 'Shop All' },
     { to: '/about', label: 'About' },
     { to: '/track-order', label: 'Track Order' },
@@ -36,7 +35,10 @@ export default function Navbar() {
             <span /><span /><span />
           </button>
 
-          <Link to="/" className="navbar-brand">{siteConfig.brandName}</Link>
+         <Link to="/" className="navbar-brand">
+  <img src="/assets/logo.png" alt="" className="navbar-logo" />
+  {siteConfig.brandName}
+</Link> 
 
           <nav className="navbar-links" aria-label="Main navigation">
             {navLinks.map((l) => (

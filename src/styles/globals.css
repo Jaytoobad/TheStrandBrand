@@ -57,7 +57,9 @@ button { font-family: inherit; cursor: pointer; }
 .btn-outline { background: transparent; border-color: var(--color-black); color: var(--color-black); }
 .btn-outline:hover { background: var(--color-black); color: #fff; }
 .btn-outline-light { background: transparent; border-color: #fff; color: #fff; }
-.btn-outline-light:hover { background: #fff; color: var(--color-black); }
+.btn-outline-light:hover { background: #fff; color: var(--color-black); } 
+.btn-light-contrast { background: #fff; color: var(--color-black); border-color: #fff; }
+.btn-light-contrast:hover { background: transparent; color: #fff; border-color: #fff; } 
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-block { width: 100%; }
 .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
@@ -189,7 +191,7 @@ html, body { overflow-x: hidden; }
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255,255,255,0.96);
+  background: var(--color-wine); 
   backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--color-border);
 }
@@ -205,7 +207,15 @@ html, body { overflow-x: hidden; }
   font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  .navbar-brand { display: flex; align-items: center; gap: 8px; } .navbar-logo { height: 32px; width: auto; } 
 }
+.navbar-logo {
+  height: 34px;
+  width: auto;
+} 
 .navbar-links {
   display: none;
   gap: 28px;
@@ -426,13 +436,13 @@ html, body { overflow-x: hidden; }
 .price-current { font-weight: 700; color: var(--color-black); font-size: 1rem; order: 1; }
 
 /* ============================= FOOTER ============================= */
-.site-footer { background: var(--color-wine); color: var(--color-black); margin-top: 80px; padding: 60px 0 0; } 
+.site-footer { background: var(--color-wine); color: var(--color-black); margin-top: 0px; padding: 60px 0 0; } 
 .footer-grid {
   display: grid; gap: 32px;
   grid-template-columns: 1fr;
 }
 .footer-grid h4 { color: var(--color-black); font-family: var(--font-body); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
-.footer-grid a { display: block; margin-bottom: 10px; font-size: 0.88rem; color: var(--color-text-muted); }
+.footer-grid a { display: block; margin-bottom: 10px; font-size: 0.88rem; color: var(--color-black); } 
 .footer-grid a:hover { color: var(--color-black); }
 .footer-brand { color: var(--color-black); font-size: 1.4rem; margin-bottom: 10px; } 
 .footer-desc { font-size: 0.88rem; max-width: 320px; margin-bottom: 16px; }
