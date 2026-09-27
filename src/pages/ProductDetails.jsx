@@ -101,7 +101,13 @@ export default function ProductDetails() {
         {images.length > 1 && (
           <div className="product-gallery-thumbs">
             {images.map((img, i) => (
-              <button key={img.id || i} className={i === activeImage ? 'active' : ''} onClick={() => setActiveImage(i)}>
+              <button
+                key={img.id || i}
+                className={i === activeImage ? 'active' : ''}
+                onClick={() => setActiveImage(i)}
+                aria-label={`View image ${i + 1} of ${images.length}`}
+                aria-pressed={i === activeImage}
+              >
                 <img src={img.url} alt="" />
               </button>
             ))}
@@ -113,7 +119,11 @@ export default function ProductDetails() {
         {product.categories?.name && <span className="product-card-category">{product.categories.name}</span>}
         <h1>{product.name}</h1>
         {product.rating_count > 0 && (
-          <div className="product-rating">{'★'.repeat(Math.round(product.rating_average))}{'☆'.repeat(5 - Math.round(product.rating_average))} <span>({product.rating_count})</span></div>
+          <div className="product-rating">
+            <span aria-hidden="true">{'★'.repeat(Math.round(product.rating_average))}{'☆'.repeat(5 - Math.round(product.rating_average))}</span>
+            <span className="visually-hidden">{`Rated ${product.rating_average} out of 5 stars`}</span>
+            <span aria-hidden="true"> ({product.rating_count})</span>
+          </div>
         )}
 
         <div className="product-card-price product-detail-price">
@@ -133,6 +143,7 @@ export default function ProductDetails() {
                   className={selectedOptions[name] === opt.option_value ? 'option-pill active' : 'option-pill'}
                   onClick={() => setSelectedOptions((s) => ({ ...s, [name]: opt.option_value }))}
                   disabled={opt.stock <= 0}
+                  aria-pressed={selectedOptions[name] === opt.option_value}
                 >
                   {opt.option_value}
                 </button>
@@ -158,6 +169,8 @@ export default function ProductDetails() {
             to="/checkout"
             className={`btn btn-primary btn-block ${outOfStock ? 'btn-disabled-link' : ''}`}
             onClick={(e) => { if (outOfStock) { e.preventDefault(); return; } handleAddToCart(); }}
+            aria-disabled={outOfStock}
+            tabIndex={outOfStock ? -1 : undefined}
           >
             Buy Now
           </Link>
@@ -174,7 +187,10 @@ export default function ProductDetails() {
               <div key={r.id} className="review-item">
                 <div className="review-header">
                   <strong>{r.profiles?.first_name || 'Verified Customer'}</strong>
-                  <span>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                  <span>
+                    <span aria-hidden="true">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                    <span className="visually-hidden">{`Rated ${r.rating} out of 5 stars`}</span>
+                  </span>
                 </div>
                 <p>{r.comment}</p>
               </div>

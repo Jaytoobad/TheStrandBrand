@@ -39,7 +39,13 @@ export default function ProductCard({ product, isWishlisted = false }) {
           {product.is_new_arrival && <span className="badge badge-new">New</span>}
           {outOfStock && <span className="badge badge-out">Out of stock</span>}
         </div>
-        <button className={`wishlist-btn ${wishlisted ? 'active' : ''}`} onClick={toggleWishlist} disabled={busy} aria-label="Toggle wishlist">
+        <button
+          className={`wishlist-btn ${wishlisted ? 'active' : ''}`}
+          onClick={toggleWishlist}
+          disabled={busy}
+          aria-pressed={wishlisted}
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
           ♡
         </button>
       </div>

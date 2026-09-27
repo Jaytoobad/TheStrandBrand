@@ -60,9 +60,20 @@ export default function Shop() {
         <aside className="shop-filters">
           <div className="filter-group">
             <h4>Category</h4>
-            <button className={!categorySlug ? 'filter-active' : ''} onClick={() => updateParam('category', '')}>All</button>
+            <button
+              className={!categorySlug ? 'filter-active' : ''}
+              aria-pressed={!categorySlug}
+              onClick={() => updateParam('category', '')}
+            >
+              All
+            </button>
             {categories.map((c) => (
-              <button key={c.id} className={categorySlug === c.slug ? 'filter-active' : ''} onClick={() => updateParam('category', c.slug)}>
+              <button
+                key={c.id}
+                className={categorySlug === c.slug ? 'filter-active' : ''}
+                aria-pressed={categorySlug === c.slug}
+                onClick={() => updateParam('category', c.slug)}
+              >
                 {c.name}
               </button>
             ))}
@@ -71,7 +82,9 @@ export default function Shop() {
 
         <div className="shop-main">
           <div className="shop-toolbar">
-            <span>{loading ? 'Loading…' : `${products.length} product${products.length === 1 ? '' : 's'}`}</span>
+            <span aria-live="polite">
+              {loading ? 'Loading…' : `${products.length} product${products.length === 1 ? '' : 's'}`}
+            </span>
             <div className="shop-toolbar-controls">
               <select
                 className="mobile-category-select"

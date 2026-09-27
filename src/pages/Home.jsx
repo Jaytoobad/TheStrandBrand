@@ -70,27 +70,39 @@ export default function Home() {
         )}
       </section>
 
-      {newArrivals.length > 0 && (
+      {(loading || newArrivals.length > 0) && (
         <section className="section container">
           <div className="section-header">
             <h2 className="section-title">New Arrivals</h2>
             <Link to="/shop?filter=new" className="btn btn-outline btn-sm">View All</Link>
           </div>
-          <div className="product-grid">
-            {newArrivals.map((p) => <ProductCard key={p.id} product={p} />)}
-          </div>
+          {loading ? (
+            <div className="product-grid">
+              {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton product-skeleton" />)}
+            </div>
+          ) : (
+            <div className="product-grid">
+              {newArrivals.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          )}
         </section>
       )}
 
-      {featured.length > 0 && (
+      {(loading || featured.length > 0) && (
         <section className="section container">
           <div className="section-header">
             <h2 className="section-title">Best Sellers</h2>
             <Link to="/shop?filter=bestsellers" className="btn btn-outline btn-sm">View All</Link>
           </div>
-          <div className="product-grid">
-            {featured.map((p) => <ProductCard key={p.id} product={p} />)}
-          </div>
+          {loading ? (
+            <div className="product-grid">
+              {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton product-skeleton" />)}
+            </div>
+          ) : (
+            <div className="product-grid">
+              {featured.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          )}
         </section>
       )}
 
