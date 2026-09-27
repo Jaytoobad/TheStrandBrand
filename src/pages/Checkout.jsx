@@ -14,6 +14,10 @@ const GHANA_REGIONS = [
   'Western North', 'Oti', 'Savannah', 'North East',
 ];
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const GHANA_PHONE_PATTERN = /^0\d{9}$/;
+const DIGITAL_ADDRESS_PATTERN = /^[A-Za-z]{2}-\d{3,4}-\d{3,4}$/;
+
 export default function Checkout() {
   usePageMeta('Checkout', 'Complete your purchase and get your order delivered.');
   const { items, subtotal, clearCart } = useCart();
@@ -21,6 +25,7 @@ export default function Checkout() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : '',
     email: user?.email || '',
@@ -39,10 +44,54 @@ export default function Checkout() {
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function validate() {
+    const next = {};
+    if (!form.name.trim() || form.name.trim().length < 2) {
+      next.name = 'Please enter your full name.';
+    }
+    if (!form.email.trim()) {
+      next.email = 'Email is required.';
+    } else if (!EMAIL_PATTERN.test(form.email.trim())) {
+      next.email = 'Please enter a valid email address.';
+    }
+    const cleanedPhone = form.phone.replace(/\s+/g, '');
+    if (!cleanedPhone) {
+      next.phone = 'Phone number is required.';
+    } else if (!GHANA_PHONE_PATTERN.test(cleanedPhone)) {
+      next.phone = 'Enter a valid 10-digit number starting with 0 (e.g. 024 123 4567).';
+    }
+    if (!form.region) {
+      next.region = 'Please select a region.';
+    }
+    if (!form.city.trim()) {
+      next.city = 'City / Town is required.';
+    }
+    if (form.digitalAddress.trim() && !DIGITAL_ADDRESS_PATTERN.test(form.digitalAddress.trim())) {
+      next.digitalAddress = 'Format should look like GA-183-9297.';
+    }
+    return next;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      showToast('Please fix the highlighted fields.', 'error');
+      const firstErrorField = document.querySelector('[aria-invalid="true"]');
+      firstErrorField?.focus();
+      return;
+    }
+
     setSubmitting(true);
     if (isPostHogConfigured) {
       posthog.capture('checkout_started', {
@@ -88,50 +137,95 @@ export default function Checkout() {
 
   return (
     <div className="container section checkout-layout">
-      <form className="checkout-form" onSubmit={handleSubmit}>
+      <form className="checkout-form" onSubmit={handleSubmit} noValidate>
         <h1>Checkout</h1>
 
         <h3>Customer Information</h3>
         <div className="form-group">
-          <label>Full Name</label>
-          <input required value={form.name} onChange={(e) => update('name', e.target.value)} />
+          <label htmlFor="checkout-name">Full Name</label>
+          <input
+            id="checkout-name"
+            value={form.name}
+            onChange={(e) => update('name', e.target.value)}
+            aria-invalid={Boolean(errors.name)}
+            aria-describedby={errors.name ? 'checkout-name-error' : undefined}
+          />
+          {errors.name && <p id="checkout-name-error" className="form-error" role="alert">{errors.name}</p>}
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label>Email</label>
-            <input required type="email" value={form.email} onChange={(e) => update('email', e.target.value)} />
+            <label htmlFor="checkout-email">Email</label>
+            <input
+              id="checkout-email"
+              type="email"
+              value={form.email}
+              onChange={(e) => update('email', e.target.value)}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'checkout-email-error' : undefined}
+            />
+            {errors.email && <p id="checkout-email-error" className="form-error" role="alert">{errors.email}</p>}
           </div>
           <div className="form-group">
-            <label>Phone</label>
-            <input required value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="0XX XXX XXXX" />
+            <label htmlFor="checkout-phone">Phone</label>
+            <input
+              id="checkout-phone"
+              value={form.phone}
+              onChange={(e) => update('phone', e.target.value)}
+              placeholder="0XX XXX XXXX"
+              aria-invalid={Boolean(errors.phone)}
+              aria-describedby={errors.phone ? 'checkout-phone-error' : undefined}
+            />
+            {errors.phone && <p id="checkout-phone-error" className="form-error" role="alert">{errors.phone}</p>}
           </div>
         </div>
 
         <h3>Delivery Information</h3>
         <div className="form-row">
           <div className="form-group">
-            <label>Region</label>
-            <select required value={form.region} onChange={(e) => update('region', e.target.value)}>
+            <label htmlFor="checkout-region">Region</label>
+            <select
+              id="checkout-region"
+              value={form.region}
+              onChange={(e) => update('region', e.target.value)}
+              aria-invalid={Boolean(errors.region)}
+              aria-describedby={errors.region ? 'checkout-region-error' : undefined}
+            >
               <option value="">Select region</option>
               {GHANA_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
+            {errors.region && <p id="checkout-region-error" className="form-error" role="alert">{errors.region}</p>}
           </div>
           <div className="form-group">
-            <label>City / Town</label>
-            <input required value={form.city} onChange={(e) => update('city', e.target.value)} />
+            <label htmlFor="checkout-city">City / Town</label>
+            <input
+              id="checkout-city"
+              value={form.city}
+              onChange={(e) => update('city', e.target.value)}
+              aria-invalid={Boolean(errors.city)}
+              aria-describedby={errors.city ? 'checkout-city-error' : undefined}
+            />
+            {errors.city && <p id="checkout-city-error" className="form-error" role="alert">{errors.city}</p>}
           </div>
         </div>
         <div className="form-group">
-          <label>Area / Suburb</label>
-          <input value={form.area} onChange={(e) => update('area', e.target.value)} />
+          <label htmlFor="checkout-area">Area / Suburb</label>
+          <input id="checkout-area" value={form.area} onChange={(e) => update('area', e.target.value)} />
         </div>
         <div className="form-group">
-          <label>GhanaPost GPS / Digital Address (optional)</label>
-          <input value={form.digitalAddress} onChange={(e) => update('digitalAddress', e.target.value)} placeholder="GA-123-4567" />
+          <label htmlFor="checkout-digital-address">GhanaPost GPS / Digital Address (optional)</label>
+          <input
+            id="checkout-digital-address"
+            value={form.digitalAddress}
+            onChange={(e) => update('digitalAddress', e.target.value)}
+            placeholder="GA-123-4567"
+            aria-invalid={Boolean(errors.digitalAddress)}
+            aria-describedby={errors.digitalAddress ? 'checkout-digital-address-error' : undefined}
+          />
+          {errors.digitalAddress && <p id="checkout-digital-address-error" className="form-error" role="alert">{errors.digitalAddress}</p>}
         </div>
         <div className="form-group">
-          <label>Additional Delivery Instructions</label>
-          <textarea rows={3} value={form.directions} onChange={(e) => update('directions', e.target.value)} />
+          <label htmlFor="checkout-directions">Additional Delivery Instructions</label>
+          <textarea id="checkout-directions" rows={3} value={form.directions} onChange={(e) => update('directions', e.target.value)} />
         </div>
 
         <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
