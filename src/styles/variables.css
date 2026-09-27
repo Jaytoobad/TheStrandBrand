@@ -2,22 +2,22 @@
    DESIGN TOKENS — change the whole site's look by editing values here.
    ============================================================================ */
 :root {
-  /* Palette: matches TheStrandBrand packaging — soft blush, black, gold */
-  --color-blush: #f0d6d9;
-  --color-cream: #f9e8ea;
+  /* Palette: white body, soft pink hero/footer accent, black text and buttons */
+  --color-blush: #f7dbe3;
+  --color-cream: #ffffff;
   --color-brown: #000000;
-  --color-wine: #c98a95;
+  --color-wine: #f3c9d3;
   --color-black: #000000;
   --color-gold: #b98d4f;
 
-  --color-bg:#dfbdbb; ;
+  --color-bg: var(--color-cream);
   --color-surface: #ffffff;
   --color-text: var(--color-black);
   --color-text-muted: #6b5f5a;
-  --color-primary: var(--color-wine);
-  --color-primary-hover: #b5747f;
-  --color-accent: var(--color-gold);
-  --color-border: #e9d7d3;
+  --color-primary: var(--color-black);
+  --color-primary-hover: #2a2a2a;
+  --color-accent: var(--color-wine);
+  --color-border: #ece5e2;
   --color-success: #3a7d4f;
   --color-error: #b3392c;
 
