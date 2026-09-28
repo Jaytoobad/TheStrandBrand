@@ -2,11 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { fetchCategories, fetchProducts } from '../services/products';
+import { formatCategoryName } from '../config/siteConfig';
 import { useToast } from '../context/ToastContext';
 import usePageMeta from '../hooks/usePageMeta';
 
 export default function Shop() {
-  usePageMeta('Shop', 'Browse premium wigs — body wave, bone straight, curly and more.');
+  usePageMeta('Shop', 'Browse premium wigs, including body wave, bone straight, curly and more.');
   const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -79,7 +80,7 @@ export default function Shop() {
                 aria-pressed={categorySlug === c.slug}
                 onClick={() => updateParam('category', c.slug)}
               >
-                {c.name}
+                {formatCategoryName(c.name)}
               </button>
             ))}
           </div>
@@ -98,7 +99,7 @@ export default function Shop() {
                 aria-label="Filter by category"
               >
                 <option value="">All Categories</option>
-                {categories.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}
+                {categories.map((c) => <option key={c.id} value={c.slug}>{formatCategoryName(c.name)}</option>)}
               </select>
               <select value={sort} onChange={(e) => updateParam('sort', e.target.value)} aria-label="Sort products">
                 <option value="newest">Newest</option>

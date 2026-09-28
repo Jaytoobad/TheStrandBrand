@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { formatMoney } from '../config/siteConfig';
+import { formatCategoryName, formatMoney } from '../config/siteConfig';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { addToWishlist, removeFromWishlist } from '../services/wishlist';
@@ -50,7 +50,7 @@ export default function ProductCard({ product, isWishlisted = false }) {
         </button>
       </div>
       <div className="product-card-body">
-        <span className="product-card-category">{product.categories?.name || ''}</span>
+        <span className="product-card-category">{formatCategoryName(product.categories?.name)}</span>
         <h3 className="product-card-name">{product.name}</h3>
         <div className="product-card-price">
           {onSale && <span className="price-original">{formatMoney(product.price)}</span>}

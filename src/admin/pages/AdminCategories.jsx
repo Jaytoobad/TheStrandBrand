@@ -55,14 +55,14 @@ export default function AdminCategories() {
 
   async function handleSave(e) {
     e.preventDefault();
-    if (imageBroken) { showToast('The image link does not load — fix it, upload an image, or clear the field.', 'error'); return; }
+    if (imageBroken) { showToast('The image link does not load. Fix it, upload an image, or clear the field.', 'error'); return; }
     try {
       await saveCategory({ ...editing, image_url: imageUrl || null, slug: slugify(editing.name) }, editing.id);
       showToast('Category saved');
       setEditing(null);
       load();
     } catch {
-      showToast('Could not save category — the name may already be in use.', 'error');
+      showToast('Could not save category. The name may already be in use.', 'error');
     }
   }
 

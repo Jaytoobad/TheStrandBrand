@@ -42,7 +42,7 @@ export default function AdminProducts() {
               <tr key={p.id}>
                 <td><img src={p.product_images?.[0]?.url || '/assets/placeholder-product.jpg'} alt="" width={40} height={40} style={{ objectFit: 'cover', borderRadius: 6 }} /></td>
                 <td>{p.name}</td>
-                <td>{p.categories?.name || '—'}</td>
+                <td>{p.categories?.name || 'Uncategorized'}</td>
                 <td>{formatMoney(p.sale_price ?? p.price)}</td>
                 <td>{p.stock <= 5 ? <span style={{ color: 'var(--color-error)' }}>{p.stock}</span> : p.stock}</td>
                 <td>{p.is_active ? 'Active' : 'Inactive'}</td>
@@ -55,7 +55,7 @@ export default function AdminProducts() {
           </tbody>
         </table>
       </div>
-      {products.length === 0 && <p className="empty-state">No products yet — add your first one.</p>}
+      {products.length === 0 && <p className="empty-state">No products yet. Add your first product.</p>}
     </div>
   );
 }

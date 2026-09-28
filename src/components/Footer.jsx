@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="container footer-grid">
         <div className="footer-brand-col">
           <h3 className="footer-brand">{siteConfig.brandName}</h3>
-          <p className="footer-desc">Premium wigs for the modern woman — quality strands, effortless confidence.</p>
+          <p className="footer-desc">Premium wigs for the modern woman. Quality strands, effortless confidence.</p>
           <div className="footer-social">
             <a href={siteConfig.instagramUrl} target="_blank" rel="noreferrer">Instagram</a>
             <a href={siteConfig.tiktokUrl} target="_blank" rel="noreferrer">TikTok</a>

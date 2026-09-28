@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchProductBySlug, fetchApprovedReviews } from '../services/products';
-import { formatMoney } from '../config/siteConfig';
+import { formatCategoryName, formatMoney } from '../config/siteConfig';
 import posthog, { isPostHogConfigured } from '../lib/posthog';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
@@ -116,7 +116,7 @@ export default function ProductDetails() {
       </div>
 
       <div className="product-info">
-        {product.categories?.name && <span className="product-card-category">{product.categories.name}</span>}
+        {product.categories?.name && <span className="product-card-category">{formatCategoryName(product.categories.name)}</span>}
         <h1>{product.name}</h1>
         {product.rating_count > 0 && (
           <div className="product-rating">
@@ -180,7 +180,7 @@ export default function ProductDetails() {
       <div className="product-reviews">
         <h2>Customer Reviews</h2>
         {reviews.length === 0 ? (
-          <p className="empty-state">No reviews yet — be the first to leave one after your order is delivered.</p>
+          <p className="empty-state">No reviews yet. Be the first to leave a review after your order is delivered.</p>
         ) : (
           <div className="reviews-list">
             {reviews.map((r) => (

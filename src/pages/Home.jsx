@@ -4,11 +4,12 @@ import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
 import collectionImage from '../assets/background.jpg.jpg';
 import { fetchCategories, fetchProducts } from '../services/products';
+import { formatCategoryName } from '../config/siteConfig';
 import { useToast } from '../context/ToastContext';
 import usePageMeta from '../hooks/usePageMeta';
 
 export default function Home() {
-  usePageMeta('Home', 'Premium wigs for the modern woman — shop body wave, bone straight, curly and more, delivered across Ghana.');
+  usePageMeta('Home', 'Premium wigs for the modern woman. Shop body wave, bone straight, curly and more, delivered across Ghana.');
   const [categories, setCategories] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [featured, setFeatured] = useState([]);
@@ -47,7 +48,7 @@ export default function Home() {
           <div className="brand-story-text">
             <span className="brand-story-label">The Collection</span>
             <h2>Made for the modern woman</h2>
-            <p>Every wig is chosen for how it wears, not just how it looks — breathable lace, true-to-life density, and colours that suit real skin tones. Priced in cedis, delivered across Ghana.</p>
+            <p>Every wig is chosen for how it wears, not just how it looks. Expect breathable lace, true-to-life density, and colours that suit real skin tones. Prices are in cedis, with delivery across Ghana.</p>
             <a href="/shop" className="btn btn-outline">Explore the collection</a>
           </div>
         </div>
@@ -64,7 +65,7 @@ export default function Home() {
             {categories.map((c) => (
               <Link key={c.id} to={`/shop?category=${c.slug}`} className="category-tile">
                 <img src={c.image_url || '/assets/placeholder-category.jpg'} alt={c.name} referrerPolicy="no-referrer" />
-                <span>{c.name}</span>
+                <span>{formatCategoryName(c.name)}</span>
               </Link>
             ))}
           </div>

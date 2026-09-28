@@ -57,7 +57,7 @@ export default function AdminOrderDetails() {
       <div className="admin-header"><h1>Order {order.order_number}</h1></div>
 
       <div className="order-item-row" style={{ fontWeight: 700, marginBottom: 20 }}>
-        <span>{order.customer_name} — {order.customer_email} — {order.customer_phone}</span>
+        <span>{order.customer_name} · {order.customer_email} · {order.customer_phone}</span>
       </div>
 
       <h3>Items</h3>
@@ -99,7 +99,7 @@ export default function AdminOrderDetails() {
       <h3 style={{ marginTop: 28 }}>Status History</h3>
       <ul className="status-history-list">
         {order.order_status_history?.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).map((h) => (
-          <li key={h.id}>{h.status.replace('_', ' ')} — {new Date(h.created_at).toLocaleString()} {h.note && `— ${h.note}`}</li>
+          <li key={h.id}>{h.status.replace('_', ' ')} · {new Date(h.created_at).toLocaleString()} {h.note && `· ${h.note}`}</li>
         ))}
       </ul>
     </div>

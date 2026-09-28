@@ -40,7 +40,7 @@ export default function AccountOrderDetails() {
       <h3>Status History</h3>
       <ul className="status-history-list">
         {order.order_status_history?.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).map((h) => (
-          <li key={h.id}>{h.status.replace('_', ' ')} — {new Date(h.created_at).toLocaleString()}</li>
+          <li key={h.id}>{h.status.replace('_', ' ')} · {new Date(h.created_at).toLocaleString()}</li>
         ))}
       </ul>
     </AccountLayout>

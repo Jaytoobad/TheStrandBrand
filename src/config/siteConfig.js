@@ -53,6 +53,10 @@ export function formatMoney(amount) {
   return `${siteConfig.currencySymbol}${Number(amount).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+export function formatCategoryName(name) {
+  return String(name || '').replace(/[-–—]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 export function whatsappUrl(message = siteConfig.whatsappMessage) {
   return `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(message)}`;
 }
