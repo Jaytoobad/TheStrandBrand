@@ -17,6 +17,7 @@ export default function Shop() {
   const filter = searchParams.get('filter') || '';
   const search = searchParams.get('search') || '';
   const sort = searchParams.get('sort') || 'newest';
+  const hasActiveFilters = Boolean(categorySlug || filter || search);
 
   useEffect(() => {
     fetchCategories().then(setCategories).catch(() => {});
@@ -50,6 +51,10 @@ export default function Shop() {
     const next = new URLSearchParams(searchParams);
     if (value) next.set(key, value); else next.delete(key);
     setSearchParams(next);
+  }
+
+  function clearFilters() {
+    setSearchParams({});
   }
 
   return (
@@ -110,6 +115,9 @@ export default function Shop() {
           ) : products.length === 0 ? (
             <div className="empty-state">
               <p>No products found. Try a different category or search term.</p>
+              {hasActiveFilters && (
+                <button className="btn btn-outline btn-sm" onClick={clearFilters}>Clear filters</button>
+              )}
             </div>
           ) : (
             <div className="product-grid">
