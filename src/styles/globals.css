@@ -470,7 +470,8 @@ html, body { overflow-x: hidden; }
   }
   .footer-bottom {
     margin-top: 24px;
-    padding: 16px 20px;
+    /* Extra bottom space keeps the copyright clear of the fixed WhatsApp button (46px + 16px offset) */
+    padding: 16px 20px 80px;
   }
 } 
   
