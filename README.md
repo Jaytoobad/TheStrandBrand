@@ -177,13 +177,21 @@ Deploy with the [Supabase CLI](https://supabase.com/docs/guides/cli):
 supabase login
 supabase link --project-ref your-project-ref
 
-supabase functions deploy initialize-payment
-supabase functions deploy verify-payment
+supabase functions deploy initialize-payment --no-verify-jwt
+supabase functions deploy verify-payment --no-verify-jwt
 supabase functions deploy paystack-webhook --no-verify-jwt
 ```
 
-(`--no-verify-jwt` on the webhook because Paystack calls it anonymously — the
-function verifies authenticity itself via the signature check instead.)
+All three run with `--no-verify-jwt` (also set in `supabase/config.toml`):
+
+- `initialize-payment` and `verify-payment` are called by guest shoppers, who
+  have no session, and the frontend's publishable key (`sb_publishable_...`)
+  is not a JWT. With JWT verification on, the Supabase gateway rejects these
+  calls and the browser only shows "Failed to fetch". The functions do not
+  trust the browser: prices come from the database and payments are verified
+  with Paystack.
+- `paystack-webhook` is called anonymously by Paystack — the function verifies
+  authenticity itself via the signature check instead.
 
 ## 12. Edge Function Secrets
 
@@ -298,6 +306,7 @@ Runs Vite's dev server with hot reload at `http://localhost:5173`.
 | Blank product list | Migration not run, or `.env` values wrong/missing |
 | "Missing VITE_SUPABASE_URL" in console | `.env` not created from `.env.example`, or dev server not restarted after editing it |
 | Checkout fails immediately | Edge Functions not deployed, or `PAYSTACK_SECRET_KEY` not set |
+| Checkout shows "We could not reach our payment service" | `initialize-payment` is not deployed, or was deployed without `--no-verify-jwt` — redeploy it (Section 11) |
 | Payment succeeds but order stays "pending" | Webhook URL not configured in Paystack, or `verify-payment` failed — check Supabase Edge Function logs |
 | Image upload fails | `product-images` bucket doesn't exist yet, or isn't public |
 | Can't reach `/admin` | Account's `profiles.role` isn't set to `'admin'` (Section 16) |

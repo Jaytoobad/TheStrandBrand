@@ -1,32 +1,37 @@
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { getPostHogHeaders } from '../lib/posthog';
 import { supabase } from '../lib/supabaseClient';
-
-const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 // These two calls hit the secure Edge Functions rather than writing to the
 // `orders`/`payments` tables directly — pricing, stock checks and payment
 // verification all happen server-side. See supabase/functions/.
+// functions.invoke adds the `apikey` header (and the user's JWT when signed
+// in) that the Supabase gateway needs before it forwards the request.
 
-export async function initializePayment(payload) {
-  const res = await fetch(`${FUNCTIONS_BASE}/initialize-payment`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getPostHogHeaders() },
-    body: JSON.stringify(payload),
+async function invokeFunction(name, body, fallbackMessage) {
+  const { data, error } = await supabase.functions.invoke(name, {
+    body,
+    headers: getPostHogHeaders(),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Could not start payment.');
-  return data;
+  if (!error) return data;
+
+  if (error instanceof FunctionsHttpError) {
+    const details = await error.context.json().catch(() => null);
+    throw new Error(details?.error || fallbackMessage, { cause: error });
+  }
+  // Network or relay failure: the request never reached our function.
+  throw new Error(
+    'We could not reach our payment service. Check your connection and try again.',
+    { cause: error }
+  );
 }
 
-export async function verifyPayment(reference) {
-  const res = await fetch(`${FUNCTIONS_BASE}/verify-payment`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getPostHogHeaders() },
-    body: JSON.stringify({ reference }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Could not verify payment.');
-  return data;
+export function initializePayment(payload) {
+  return invokeFunction('initialize-payment', payload, 'Could not start payment.');
+}
+
+export function verifyPayment(reference) {
+  return invokeFunction('verify-payment', { reference }, 'Could not verify payment.');
 }
 
 export async function fetchMyOrders(userId) {
