@@ -1,0 +1,14 @@
+project_id = "thestrandbrand"
+
+# The frontend uses a publishable key (sb_publishable_...), which is not a JWT,
+# and guests have no session. The gateway JWT check would reject every guest
+# checkout, so these functions do their own checks: prices come from the
+# database and payments are verified with Paystack.
+[functions.initialize-payment]
+verify_jwt = false
+
+[functions.verify-payment]
+verify_jwt = false
+
+[functions.paystack-webhook]
+verify_jwt = false
