@@ -8,12 +8,17 @@ export const siteConfig = {
   brandName: 'TheStrandBrand',
   tagline: 'Your Hair. Your Crown.',
 
-  // --- Contact / social — REPLACE THESE with the real business details ---
-  whatsappNumber: '233000000000', // digits only, country code first, no + or spaces
-  contactEmail: 'hello@thestrandbrand.com',
-  instagramUrl: 'https://instagram.com/thestrandbrand',
-  tiktokUrl: 'https://tiktok.com/@thestrandbrand',
-  snapchatUrl: 'https://snapchat.com/add/thestrandbrand',
+  // --- Contact / social ---
+  // WhatsApp: digits only, country code first, no + or spaces
+  whatsappNumber: '233541988028',
+  whatsappDisplay: '054 198 8028',
+  // Phone calls: same format
+  phoneNumber: '233543022208',
+  phoneDisplay: '054 302 2208',
+  contactEmail: 'hello@thestrandbrand.com', // TODO: replace with the real business email
+  instagramUrl: 'https://instagram.com/thestrandbrand', // TODO: replace with the real Instagram handle
+  tiktokUrl: 'https://tiktok.com/@the.strandbrand',
+  snapchatUrl: 'https://snapchat.com/add/the.strandbrand',
 
   currency: 'GHS',
   currencySymbol: 'GH₵',
@@ -50,4 +55,8 @@ export function formatMoney(amount) {
 
 export function whatsappUrl(message = siteConfig.whatsappMessage) {
   return `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(message)}`;
+}
+
+export function telUrl() {
+  return `tel:+${siteConfig.phoneNumber}`;
 }
