@@ -59,4 +59,4 @@ export function whatsappUrl(message = siteConfig.whatsappMessage) {
 
 export function telUrl() {
   return `tel:+${siteConfig.phoneNumber}`;
-}
+} 
