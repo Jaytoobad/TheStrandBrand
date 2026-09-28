@@ -52,7 +52,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section container tinted-section">
+      <section className="section container">
         <h2 className="section-title">Shop By Category</h2>
         {loading ? (
           <div className="category-grid">
@@ -71,11 +71,8 @@ export default function Home() {
       </section>
 
       {(loading || newArrivals.length > 0) && (
-        <section className="section container tinted-section">
-          <div className="section-header">
-            <h2 className="section-title">New Arrivals</h2>
-            <Link to="/shop?filter=new" className="btn btn-outline btn-sm">View All</Link>
-          </div>
+        <section className="section container">
+          <h2 className="section-title">New Arrivals</h2>
           {loading ? (
             <div className="product-grid">
               {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton product-skeleton" />)}
@@ -85,15 +82,17 @@ export default function Home() {
               {newArrivals.map((p) => <ProductCard key={p.id} product={p} />)}
             </div>
           )}
+          {!loading && (
+            <div className="section-cta">
+              <Link to="/shop?filter=new" className="btn btn-view-all" aria-label="View all new arrivals">View All</Link>
+            </div>
+          )}
         </section>
       )}
 
       {(loading || featured.length > 0) && (
-        <section className="section container tinted-section">
-          <div className="section-header">
-            <h2 className="section-title">Best Sellers</h2>
-            <Link to="/shop?filter=bestsellers" className="btn btn-outline btn-sm">View All</Link>
-          </div>
+        <section className="section container">
+          <h2 className="section-title">Best Sellers</h2>
           {loading ? (
             <div className="product-grid">
               {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton product-skeleton" />)}
@@ -103,6 +102,11 @@ export default function Home() {
               {featured.map((p) => <ProductCard key={p.id} product={p} />)}
             </div>
           )}
+          {!loading && (
+            <div className="section-cta">
+              <Link to="/shop?filter=bestsellers" className="btn btn-view-all" aria-label="View all best sellers">View All</Link>
+            </div>
+          )}
         </section>
       )}
 
@@ -110,7 +114,7 @@ export default function Home() {
         <div className="container">
           <h2>Find A Style That Feels Like You.</h2>
           <p>Quality strands. Effortless confidence.</p>
-          <Link to="/shop" className="btn btn-light-contrast">Shop The Collection</Link> 
+          <Link to="/shop" className="btn btn-light-contrast">Shop The Collection</Link>
         </div>
       </section>
     </div>
