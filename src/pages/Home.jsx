@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
+import collectionImage from '../assets/background.jpg.jpg';
 import { fetchCategories, fetchProducts } from '../services/products';
 import { useToast } from '../context/ToastContext';
 import usePageMeta from '../hooks/usePageMeta';
@@ -42,7 +43,7 @@ export default function Home() {
 
       <section className="brand-story">
         <div className="container brand-story-inner">
-          <img src="/assets/hero-placeholder-2.png" alt="TheStrandBrand" />
+          <img src={collectionImage} alt="TheStrandBrand collection" />
           <div className="brand-story-text">
             <span className="brand-story-label">The Collection</span>
             <h2>Made for the modern woman</h2>
