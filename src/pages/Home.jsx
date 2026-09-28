@@ -62,7 +62,7 @@ export default function Home() {
           <div className="category-grid">
             {categories.map((c) => (
               <Link key={c.id} to={`/shop?category=${c.slug}`} className="category-tile">
-                <img src={c.image_url || '/assets/placeholder-category.jpg'} alt={c.name} />
+                <img src={c.image_url || '/assets/placeholder-category.jpg'} alt={c.name} referrerPolicy="no-referrer" />
                 <span>{c.name}</span>
               </Link>
             ))}

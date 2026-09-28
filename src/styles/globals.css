@@ -842,6 +842,16 @@ html, body { overflow-x: hidden; }
 .image-list-item { position: relative; width: 90px; height: 90px; border-radius: var(--radius-sm); overflow: hidden; }
 .image-list-item img { width: 100%; height: 100%; object-fit: cover; }
 .image-list-item button { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 20px; height: 20px; border-radius: 50%; font-size: 0.7rem; }
+.form-hint { color: var(--color-text-muted); font-size: 0.78rem; margin-top: 6px; }
+.category-image-upload { display: flex; gap: 8px; margin-top: 10px; }
+.form-group .category-image-upload label { display: inline-flex; margin: 0; font-size: 0.8rem; color: var(--color-black); cursor: pointer; }
+.category-image-upload label:focus-within { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.category-image-preview {
+  margin-top: 12px; width: 120px; aspect-ratio: 4 / 5;
+  border-radius: var(--radius-sm); overflow: hidden; background: var(--color-bg); border: 1px solid var(--color-border);
+}
+.category-image-preview img { width: 100%; height: 100%; object-fit: cover; }
+.category-image-preview.is-broken { border-color: var(--color-error); border-style: dashed; }
  /* ============================= BRAND STORY ============================= */ .brand-story { padding: 70px 0; background: var(--color-bg); } .brand-story-inner { display: grid; gap: 36px; grid-template-columns: 1fr; align-items: center; } .brand-story-inner img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: var(--radius-lg); } .brand-story-label { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-black); font-weight: 700; } .brand-story-text h2 { margin: 10px 0 16px; font-size: 1.6rem; } .brand-story-text p { color: var(--color-text-muted); margin-bottom: 24px; max-width: 480px; } @media (min-width: 800px) { .brand-story-inner { grid-template-columns: 1fr 1fr; } } 
  @media (max-width: 640px) {
   .navbar-inner { gap: 8px; padding: 12px 14px; }

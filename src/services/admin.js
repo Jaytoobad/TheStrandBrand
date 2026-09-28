@@ -123,6 +123,17 @@ export async function saveCategory(category, id) {
   }
 }
 
+// Category images share the public `product-images` bucket (same admin-only
+// insert policy), kept in their own folder so they're easy to find.
+export async function uploadCategoryImage(file) {
+  const ext = file.name.split('.').pop();
+  const path = `categories/${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from('product-images').upload(path, file, { cacheControl: '3600', upsert: false });
+  if (error) throw error;
+  const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 export async function setCategoryActive(id, isActive) {
   const { error } = await supabase.from('categories').update({ is_active: isActive }).eq('id', id);
   if (error) throw error;

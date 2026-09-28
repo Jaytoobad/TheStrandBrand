@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import PageLoader from '../components/PageLoader';
 import { useAuth } from '../context/AuthContext';
 import { signOut } from '../services/auth';
 import { siteConfig } from '../config/siteConfig';
@@ -41,7 +43,9 @@ export default function AdminLayout() {
         </div>
       </aside>
       <main className="admin-main">
-        <Outlet />
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );
