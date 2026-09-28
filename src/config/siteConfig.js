@@ -31,14 +31,14 @@ export const siteConfig = {
   // --- Hero slides — replace image with your own uploaded/hosted image URLs ---
   heroSlides: [
     {
-      image: '/assets/hero-placeholder-1.jpg',
+      image: '/assets/hero-placeholder-1.png',
       heading: 'YOUR HAIR. YOUR CROWN.',
       subheading: 'Discover beautiful wigs designed to complement your style.',
       primaryCta: { label: 'Shop Wigs', href: '/shop' },
       secondaryCta: { label: 'Explore Collection', href: '/shop?filter=collections' },
     },
     {
-      image: '/assets/hero-placeholder-2.jpg',
+      image: '/assets/hero-placeholder-2.png',
       heading: 'FIND A STYLE THAT FEELS LIKE YOU.',
       subheading: 'Quality strands. Effortless confidence.',
       primaryCta: { label: 'New Arrivals', href: '/shop?filter=new' },

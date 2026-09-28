@@ -42,7 +42,7 @@ export default function Home() {
 
       <section className="brand-story">
         <div className="container brand-story-inner">
-          <img src="/assets/hero-placeholder-2.jpg" alt="TheStrandBrand" />
+          <img src="/assets/hero-placeholder-2.png" alt="TheStrandBrand" />
           <div className="brand-story-text">
             <span className="brand-story-label">The Collection</span>
             <h2>Made for the modern woman</h2>
