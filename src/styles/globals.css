@@ -451,7 +451,7 @@ html, body { overflow-x: hidden; }
 .footer-bottom {
   display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
   padding: 24px 20px; margin-top: 40px; border-top: 1px solid rgba(0,0,0,0.1);
-  font-size: 0.78rem; color: #9a8f89;
+  font-size: 0.78rem; color: #050504;
 }
 @media (min-width: 700px) {
   .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
@@ -745,4 +745,11 @@ html, body { overflow-x: hidden; }
 .image-list-item { position: relative; width: 90px; height: 90px; border-radius: var(--radius-sm); overflow: hidden; }
 .image-list-item img { width: 100%; height: 100%; object-fit: cover; }
 .image-list-item button { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 20px; height: 20px; border-radius: 50%; font-size: 0.7rem; }
- /* ============================= BRAND STORY ============================= */ .brand-story { padding: 70px 0; background: var(--color-bg); } .brand-story-inner { display: grid; gap: 36px; grid-template-columns: 1fr; align-items: center; } .brand-story-inner img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: var(--radius-lg); } .brand-story-label { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-black); font-weight: 700; } .brand-story-text h2 { margin: 10px 0 16px; font-size: 1.6rem; } .brand-story-text p { color: var(--color-text-muted); margin-bottom: 24px; max-width: 480px; } @media (min-width: 800px) { .brand-story-inner { grid-template-columns: 1fr 1fr; } }
+ /* ============================= BRAND STORY ============================= */ .brand-story { padding: 70px 0; background: var(--color-bg); } .brand-story-inner { display: grid; gap: 36px; grid-template-columns: 1fr; align-items: center; } .brand-story-inner img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: var(--radius-lg); } .brand-story-label { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-black); font-weight: 700; } .brand-story-text h2 { margin: 10px 0 16px; font-size: 1.6rem; } .brand-story-text p { color: var(--color-text-muted); margin-bottom: 24px; max-width: 480px; } @media (min-width: 800px) { .brand-story-inner { grid-template-columns: 1fr 1fr; } } 
+ @media (max-width: 640px) {
+  .navbar-inner { gap: 8px; padding: 12px 14px; }
+  .navbar-brand { font-size: 1rem; gap: 6px; }
+  .navbar-logo { height: 26px; }
+  .navbar-actions { gap: 12px; }
+  .navbar-actions svg { width: 18px; height: 18px; }
+}
