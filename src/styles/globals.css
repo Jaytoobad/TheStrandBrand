@@ -922,3 +922,5 @@ html, body { overflow-x: hidden; }
   .data-table th, .data-table td { padding: 10px 12px; }
   .table-actions { flex-wrap: wrap; }
 }
+.data-table td:first-child a { white-space: nowrap; }
+.admin-stat-card span, .stat-card span { font-family: var(--font-body); }
