@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchAdminOrderById, updateOrderStatus, updateOrderShipping } from '../../services/admin';
-import { formatMoney } from '../../config/siteConfig';
+import { formatMoney, formatOrderStatus } from '../../config/siteConfig';
 import { useToast } from '../../context/ToastContext';
 import PageLoader from '../../components/PageLoader';
 
@@ -81,7 +81,7 @@ export default function AdminOrderDetails() {
       <h3 style={{ marginTop: 28 }}>Update Status</h3>
       <div className="admin-toolbar">
         <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>
-          {STATUSES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+          {STATUSES.map((s) => <option key={s} value={s}>{formatOrderStatus(s)}</option>)}
         </select>
         <input placeholder="Internal note (optional)" value={note} onChange={(e) => setNote(e.target.value)} style={{ flex: 1, minWidth: 200 }} />
         <button className="btn btn-primary btn-sm" onClick={handleStatusUpdate}>Update</button>
@@ -99,7 +99,7 @@ export default function AdminOrderDetails() {
       <h3 style={{ marginTop: 28 }}>Status History</h3>
       <ul className="status-history-list">
         {order.order_status_history?.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).map((h) => (
-          <li key={h.id}>{h.status.replace('_', ' ')} · {new Date(h.created_at).toLocaleString()} {h.note && `· ${h.note}`}</li>
+          <li key={h.id}>{formatOrderStatus(h.status)} · {new Date(h.created_at).toLocaleString()} {h.note && `· ${h.note}`}</li>
         ))}
       </ul>
     </div>

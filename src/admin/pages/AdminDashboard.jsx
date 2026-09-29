@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchDashboardStats, fetchRecentOrders } from '../../services/admin';
-import { formatMoney } from '../../config/siteConfig';
+import { formatMoney, formatOrderStatus } from '../../config/siteConfig';
 import PageLoader from '../../components/PageLoader';
 
 export default function AdminDashboard() {
@@ -45,7 +45,7 @@ export default function AdminDashboard() {
                 <td>{o.customer_name}</td>
                 <td>{formatMoney(o.total)}</td>
                 <td>{o.payment_status}</td>
-                <td>{o.status.replace('_', ' ')}</td>
+                <td>{formatOrderStatus(o.status)}</td>
                 <td>{new Date(o.created_at).toLocaleDateString()}</td>
               </tr>
             ))}

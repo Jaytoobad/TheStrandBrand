@@ -57,6 +57,11 @@ export function formatCategoryName(name) {
   return String(name || '').replace(/[-–—]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// "out_for_delivery" -> "out for delivery" (replaces every underscore, not just the first)
+export function formatOrderStatus(status) {
+  return String(status || '').replace(/_/g, ' ');
+}
+
 export function getPublicSiteUrl() {
   const configuredUrl = import.meta.env.VITE_PUBLIC_SITE_URL?.trim().replace(/\/+$/, '');
   if (configuredUrl) return configuredUrl;

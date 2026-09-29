@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
+import OrderRow from './OrderRow';
 import { useAuth } from '../../context/AuthContext';
 import { fetchMyOrders } from '../../services/orders';
-import { formatMoney } from '../../config/siteConfig';
 import PageLoader from '../../components/PageLoader';
 
 export default function AccountOrders() {
@@ -13,24 +13,20 @@ export default function AccountOrders() {
 
   useEffect(() => {
     if (!user) return;
-    fetchMyOrders(user.id).then(setOrders).finally(() => setLoading(false));
+    fetchMyOrders(user.id).then(setOrders).catch(() => setOrders([])).finally(() => setLoading(false));
   }, [user]);
 
   return (
     <AccountLayout>
       <h1>My Orders</h1>
       {loading ? <PageLoader /> : orders.length === 0 ? (
-        <p className="empty-state">You have no orders yet. <Link to="/shop">Start shopping</Link></p>
+        <div className="empty-state">
+          <p>You have no orders yet.</p>
+          <Link to="/shop" className="btn btn-primary btn-sm">Start shopping</Link>
+        </div>
       ) : (
         <div className="order-list">
-          {orders.map((o) => (
-            <Link key={o.id} to={`/account/orders/${o.id}`} className="order-row card">
-              <span>{o.order_number}</span>
-              <span>{o.order_items?.length} item(s)</span>
-              <span>{formatMoney(o.total)}</span>
-              <span className="badge status-badge">{o.status.replace('_', ' ')}</span>
-            </Link>
-          ))}
+          {orders.map((o) => <OrderRow key={o.id} order={o} />)}
         </div>
       )}
     </AccountLayout>

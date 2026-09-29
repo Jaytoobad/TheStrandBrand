@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchAllOrders } from '../../services/admin';
-import { formatMoney } from '../../config/siteConfig';
+import { formatMoney, formatOrderStatus } from '../../config/siteConfig';
 import PageLoader from '../../components/PageLoader';
 
 const STATUSES = ['pending_payment', 'paid', 'processing', 'packaged', 'dispatched', 'in_transit', 'delivered', 'cancelled', 'refunded'];
@@ -30,7 +30,7 @@ export default function AdminOrders() {
         <input placeholder="Search order #, customer, email…" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} />
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
-          {STATUSES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+          {STATUSES.map((s) => <option key={s} value={s}>{formatOrderStatus(s)}</option>)}
         </select>
         <select value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)}>
           <option value="">All payments</option>
@@ -54,7 +54,7 @@ export default function AdminOrders() {
                   <td>{o.order_items?.length}</td>
                   <td>{formatMoney(o.total)}</td>
                   <td>{o.payment_status}</td>
-                  <td>{o.status.replace('_', ' ')}</td>
+                  <td>{formatOrderStatus(o.status)}</td>
                   <td>{new Date(o.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}

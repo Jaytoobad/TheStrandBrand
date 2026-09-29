@@ -24,7 +24,7 @@ export default function AccountLayout({ children }) {
     <div className="container section account-layout">
       <aside className="account-sidebar">
         <h3>Hi, {profile?.first_name || 'there'}</h3>
-        <nav>
+        <nav className="account-nav" aria-label="Account">
           {links.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'active' : '')}>
               {l.label}
