@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { trackOrder } from '../services/orders';
 import { formatMoney } from '../config/siteConfig';
 import DeliveryEstimate from '../components/DeliveryEstimate';
@@ -21,17 +21,19 @@ const STATUS_LABELS = {
 export default function TrackOrder() {
   usePageMeta('Track Your Order', 'Enter your order number to check your delivery status.');
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  // Order confirmation passes the checkout email in router state (never in the
+  // URL), so a guest lands straight on their order after paying.
+  const handoffContact = location.state?.contact || '';
   const [orderNumber, setOrderNumber] = useState(searchParams.get('order') || '');
-  const [contact, setContact] = useState('');
+  const [contact, setContact] = useState(handoffContact);
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | loading | not_found | found
-  const [autoTried, setAutoTried] = useState(false);
 
-  async function handleSearch(e) {
-    e?.preventDefault();
+  async function runSearch(number, contactValue) {
     setStatus('loading');
     try {
-      const result = await trackOrder({ orderNumber, contact });
+      const result = await trackOrder({ orderNumber: number, contact: contactValue });
       if (result) { setOrder(result); setStatus('found'); }
       else { setOrder(null); setStatus('not_found'); }
     } catch {
@@ -39,11 +41,17 @@ export default function TrackOrder() {
     }
   }
 
+  function handleSearch(e) {
+    e?.preventDefault();
+    runSearch(orderNumber, contact);
+  }
+
   useEffect(() => {
-    // If arriving with ?order=... from order confirmation, don't auto-search
-    // (we still need the contact field — never expose an order from the
-    // number alone).
-    setAutoTried(true);
+    // Auto-search only when both the order number and contact were handed over;
+    // an order is never exposed from the number alone.
+    const initialOrder = searchParams.get('order');
+    if (initialOrder && handoffContact) runSearch(initialOrder, handoffContact);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const activeStepIndex = order ? STATUS_STEPS.indexOf(order.status) : -1;

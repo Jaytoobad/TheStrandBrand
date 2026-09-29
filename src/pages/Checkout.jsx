@@ -127,6 +127,8 @@ export default function Checkout() {
       // 'pending_payment' — it becomes 'paid' only after server-side
       // verification when Paystack redirects back.
       sessionStorage.setItem('tsb_pending_order', result.orderNumber);
+      // Lets guests land on their tracked order after payment without retyping their email.
+      sessionStorage.setItem('tsb_pending_contact', form.email.trim());
       clearCart();
       window.location.href = result.authorizationUrl;
     } catch (err) {

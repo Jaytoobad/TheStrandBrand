@@ -30,6 +30,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-posthog-distinct-id, x-posthog-session-id',
 };
 
+// Where Paystack sends the customer after paying. Without a callback_url,
+// Paystack's hosted page just says "payment successful" and leaves them there.
+// Only our own site origins are accepted so the redirect can't be pointed elsewhere.
+function resolveCallbackBase(req: Request): string | null {
+  const configured = Deno.env.get('PUBLIC_SITE_URL')?.replace(/\/$/, '');
+  const origin = req.headers.get('origin')?.replace(/\/$/, '');
+  if (origin) {
+    try {
+      const { protocol, hostname } = new URL(origin);
+      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isVercel = protocol === 'https:' && hostname.endsWith('.vercel.app');
+      if (origin === configured || isLocal || isVercel) return origin;
+    } catch {
+      // Malformed Origin header — fall through to the configured site URL.
+    }
+  }
+  return configured && !configured.includes('example') ? configured : null;
+}
+
 function orderNumber() {
   const d = new Date();
   const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
@@ -154,6 +173,7 @@ Deno.serve(async (req) => {
     });
 
     // --- Ask Paystack to start a transaction for the TRUSTED total. ---
+    const callbackBase = resolveCallbackBase(req);
     const paystackRes = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -164,6 +184,8 @@ Deno.serve(async (req) => {
         email: customer.email,
         amount: Math.round(total * 100), // Paystack expects amount in pesewas (kobo-equivalent for GHS)
         currency: 'GHS',
+        // Paystack appends ?trxref=...&reference=... to this URL.
+        ...(callbackBase ? { callback_url: `${callbackBase}/order-confirmation/${order.order_number}` } : {}),
         metadata: {
           order_id: order.id,
           order_number: order.order_number,

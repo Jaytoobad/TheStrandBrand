@@ -18,8 +18,7 @@ export default function CookiePolicy() {
       <p>We use browser storage to remember your cart, keep your signed-in session active, and remember your cookie choice. These functions are needed for the shop to work.</p>
 
       <h2>Optional analytics</h2>
-      <p>PostHog analytics stays off until you accept. If enabled, it may use cookies or local storage to measure page visits and interactions. Signed-in activity may be associated with a pseudonymous account identifier. We do not use advertising cookies.</p>
-        <p>PostHog analytics stays off until you accept. If enabled, it may use cookies or local storage to measure page visits and the store's explicit product, account, and checkout events. Signed-in activity may be associated with a pseudonymous account identifier. We do not use advertising cookies.</p>
+      <p>PostHog analytics stays off until you accept. If enabled, it may use cookies or local storage to measure page visits and the store's explicit product, account, and checkout events. Signed-in activity may be associated with a pseudonymous account identifier. We do not use advertising cookies.</p>
 
       <h2>Your choice</h2>
       <p>Your choice is saved in this browser. Accepting enables analytics; rejecting disables it and removes PostHog identifiers stored by this site. Change your choice at any time using the controls below or the Cookie Settings link in the footer. Rejecting analytics does not affect your cart or account.</p>

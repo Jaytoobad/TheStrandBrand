@@ -374,13 +374,15 @@ html, body { overflow-x: hidden; }
   aspect-ratio: 3 / 4;
   overflow: hidden;
   background: var(--color-bg);
-  padding: 0 12px;
 }
 
+/* Fill the whole 3:4 frame; bias the crop upward so faces and hairlines stay in view */
 .product-card-image img {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center 20%;
   transition: transform var(--transition-base);
 }
 
@@ -415,8 +417,6 @@ html, body { overflow-x: hidden; }
 .wishlist-btn:hover { transform: scale(1.08); }
 .wishlist-btn.active { color: var(--color-primary); }
 @media (max-width: 640px) {
-  .category-tile { padding: 0 8px; }
-  .product-card-image { padding: 0 8px; }
   .product-card-badges {
     top: 8px;
     left: 8px;
@@ -448,7 +448,9 @@ html, body { overflow-x: hidden; }
 .footer-grid h4 { color: var(--color-black); font-family: var(--font-body); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
 .footer-grid a { display: block; margin-bottom: 10px; font-size: 0.88rem; color: var(--color-black); } 
 .footer-grid a:hover { color: var(--color-black); }
-.footer-cookie-settings { display: block; margin: 0 0 10px; padding: 0; border: 0; background: none; color: var(--color-black); font-size: 0.88rem; text-align: left; text-decoration: underline; text-underline-offset: 3px; }
+/* A button (it opens the consent banner) styled to match the footer links above it */
+.footer-cookie-settings { display: block; margin: 0 0 10px; padding: 0; border: 0; background: none; color: var(--color-black); font: inherit; font-size: 0.88rem; line-height: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.footer-cookie-settings:hover { color: var(--color-black); }
 .footer-brand { color: var(--color-black); font-size: 1.4rem; margin-bottom: 10px; } 
 .footer-desc { font-size: 0.88rem; max-width: 320px; margin-bottom: 16px; }
 .footer-social { display: flex; gap: 16px; }
@@ -482,6 +484,10 @@ html, body { overflow-x: hidden; }
 .cookie-consent-copy a { color: var(--color-primary); font-size: 0.84rem; text-decoration: underline; text-underline-offset: 3px; }
 .cookie-consent-actions { display: flex; flex-shrink: 0; gap: 8px; }
 .cookie-consent-actions .btn { padding: 10px 14px; font-size: 0.76rem; white-space: nowrap; }
+@media (min-width: 641px) {
+  /* Start the banner to the right of the WhatsApp button (22px offset + 54px + 20px gap) */
+  .cookie-consent { left: 96px; }
+}
 @media (min-width: 700px) {
   .footer-grid { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
 }
@@ -561,9 +567,8 @@ html, body { overflow-x: hidden; }
 .category-tile {
   position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 4/5; display: block; min-width: 0;
   background: var(--color-bg);
-  padding: 0 14px;
 }
-.category-tile img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--transition-base); }
+.category-tile img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; transition: transform var(--transition-base); }
 .category-tile:hover img { transform: scale(1.05); }
 .category-tile span {
   position: absolute; bottom: 0; left: 0; right: 0; padding: 16px;
@@ -779,6 +784,7 @@ html, body { overflow-x: hidden; }
 }
 .order-number { font-size: 1.1rem; margin-bottom: 18px; }
 .confirmation-actions { display: flex; gap: 12px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
+.confirmation-redirect { margin-top: 18px; color: var(--color-text-muted); font-size: 0.9rem; }
 
 .track-order { max-width: 560px; margin: 0 auto; }
 .track-intro { color: var(--color-text-muted); margin-bottom: 24px; }

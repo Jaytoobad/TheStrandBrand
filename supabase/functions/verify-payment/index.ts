@@ -52,7 +52,7 @@ export async function verifyAndFulfil(reference: string) {
 
   // Idempotency guard: if we've already processed this as successful, don't redo it.
   if (payment.status === 'success' && payment.orders.payment_status === 'paid') {
-    return { orderNumber: payment.orders.order_number, status: payment.orders.status, alreadyProcessed: true };
+    return { orderId: payment.order_id, orderNumber: payment.orders.order_number, status: payment.orders.status, alreadyProcessed: true };
   }
 
   const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
@@ -110,7 +110,7 @@ export async function verifyAndFulfil(reference: string) {
 
   if (orderUpdateError) throw orderUpdateError;
   if (!paidOrder) {
-    return { orderNumber: payment.orders.order_number, status: 'paid', alreadyProcessed: true };
+    return { orderId: payment.order_id, orderNumber: payment.orders.order_number, status: 'paid', alreadyProcessed: true };
   }
 
   await supabase.from('order_status_history').insert({
@@ -158,7 +158,7 @@ export async function verifyAndFulfil(reference: string) {
     });
   }
 
-  return { orderNumber: payment.orders.order_number, status: 'paid' };
+  return { orderId: payment.order_id, orderNumber: payment.orders.order_number, status: 'paid' };
 }
 
 function json(body: unknown, status = 200) {
