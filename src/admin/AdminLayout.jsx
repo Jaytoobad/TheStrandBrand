@@ -39,6 +39,7 @@ export default function AdminLayout() {
         </nav>
         <div className="admin-sidebar-footer">
           <span>{profile?.email}</span>
+          <a href="/" target="_blank" rel="noopener noreferrer" className="admin-view-shop">View shop ↗</a>
           <button onClick={handleLogout}>Logout</button>
         </div>
       </aside>

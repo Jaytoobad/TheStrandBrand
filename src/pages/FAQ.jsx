@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 const faqs = [
   { q: 'What does made to order mean?', a: 'Your wig is prepared after your preorder is confirmed and is made to your selected specifications.' },
   { q: 'How long will my order take?', id: 'delivery', a: 'Allow about 7 days for preparation and 2 to 3 days for delivery. The estimated total is 9 to 10 days.' },
+  { q: 'How much is delivery?', a: 'The delivery fee depends on your region. Greater Accra costs the least, and your exact fee is shown at checkout as soon as you pick your region, before you pay.' },
   { q: 'What should I confirm before paying?', a: 'Check your length, colour, density, lace type, style, and any other selected specifications before placing your order.' },
   { q: 'Can I cancel or get a refund after ordering?', id: 'returns', a: 'Preordered and custom made hair orders are non refundable once payment is made and the order is confirmed. Supplier, shipping, or customs delays do not qualify for a refund.', policyLink: true },
   { q: 'What should I do when my order arrives?', a: 'Record a clear unboxing video before opening or handling the hair. Check your order during unboxing and contact us immediately if anything is wrong.' },

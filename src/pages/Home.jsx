@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
-import collectionImage from '../assets/background.jpg.jpg';
+import collectionImage from '../assets/collection-hair.jpg';
 import { fetchCategories, fetchProducts } from '../services/products';
 import { formatCategoryName } from '../config/siteConfig';
 import { useToast } from '../context/ToastContext';
@@ -44,7 +44,14 @@ export default function Home() {
 
       <section className="brand-story">
         <div className="container brand-story-inner">
-          <img src={collectionImage} alt="TheStrandBrand collection" />
+          <img
+            src={collectionImage}
+            alt="TheStrandBrand hair bundles with three finished wigs: straight, deep wave and body wave"
+            width="810"
+            height="1080"
+            loading="lazy"
+            decoding="async"
+          />
           <div className="brand-story-text">
             <span className="brand-story-label">The Collection</span>
             <h2>Made for the modern woman</h2>

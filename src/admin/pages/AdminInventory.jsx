@@ -11,13 +11,16 @@ export default function AdminInventory() {
   function load() { fetchInventory().then(setData).finally(() => setLoading(false)); }
   useEffect(load, []);
 
-  async function handleProductStock(id, value) {
-    const stock = Math.max(0, Number(value));
-    try { await updateProductStock(id, stock); load(); } catch { showToast('Could not update stock.', 'error'); }
+  // Saves on blur, and only when the number actually changed.
+  async function handleProductStock(p, value) {
+    const stock = Math.max(0, Math.floor(Number(value) || 0));
+    if (stock === p.stock) return;
+    try { await updateProductStock(p.id, stock); showToast(`Stock updated for ${p.name}`); load(); } catch { showToast('Could not update stock.', 'error'); }
   }
-  async function handleVariantStock(id, value) {
-    const stock = Math.max(0, Number(value));
-    try { await updateVariantStock(id, stock); load(); } catch { showToast('Could not update stock.', 'error'); }
+  async function handleVariantStock(v, value) {
+    const stock = Math.max(0, Math.floor(Number(value) || 0));
+    if (stock === v.stock) return;
+    try { await updateVariantStock(v.id, stock); showToast('Stock updated'); load(); } catch { showToast('Could not update stock.', 'error'); }
   }
 
   if (loading) return <PageLoader />;
@@ -26,23 +29,24 @@ export default function AdminInventory() {
     <div>
       <div className="admin-header"><h1>Inventory</h1></div>
 
-      <h3 style={{ marginBottom: 12 }}>Products</h3>
-      <div className="data-table-wrap" style={{ marginBottom: 32 }}>
+      <p className="admin-page-hint">Type a new number and click away to save.</p>
+      <h3 className="admin-table-title">Products</h3>
+      <div className="data-table-wrap admin-table-gap">
         <table className="data-table">
           <thead><tr><th>Product</th><th>Stock</th><th>Status</th></tr></thead>
           <tbody>
             {data.products.map((p) => (
               <tr key={p.id}>
                 <td>{p.name}</td>
-                <td><input type="number" min="0" defaultValue={p.stock} onBlur={(e) => handleProductStock(p.id, e.target.value)} style={{ width: 80 }} /></td>
-                <td>{p.stock === 0 ? <span style={{ color: 'var(--color-error)' }}>Out of stock</span> : p.stock <= 5 ? <span style={{ color: '#b98d4f' }}>Low stock</span> : 'In stock'}</td>
+                <td><input className="stock-input" type="number" min="0" aria-label={`Stock for ${p.name}`} defaultValue={p.stock} key={p.stock} onBlur={(e) => handleProductStock(p, e.target.value)} /></td>
+                <td>{p.stock === 0 ? <span className="admin-pill is-bad">Out of stock</span> : p.stock <= 5 ? <span className="admin-pill is-warn">Low stock</span> : <span className="admin-pill is-good">In stock</span>}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <h3 style={{ marginBottom: 12 }}>Variants</h3>
+      <h3 className="admin-table-title">Variants</h3>
       <div className="data-table-wrap">
         <table className="data-table">
           <thead><tr><th>Product</th><th>Option</th><th>Stock</th></tr></thead>
@@ -51,11 +55,12 @@ export default function AdminInventory() {
               <tr key={v.id}>
                 <td>{v.products?.name}</td>
                 <td>{v.option_name}: {v.option_value}</td>
-                <td><input type="number" min="0" defaultValue={v.stock} onBlur={(e) => handleVariantStock(v.id, e.target.value)} style={{ width: 80 }} /></td>
+                <td><input className="stock-input" type="number" min="0" aria-label={`Stock for ${v.products?.name} ${v.option_value}`} defaultValue={v.stock} key={v.stock} onBlur={(e) => handleVariantStock(v, e.target.value)} /></td>
               </tr>
             ))}
           </tbody>
         </table>
+        {data.variants.length === 0 && <p className="empty-state">No product variants yet.</p>}
       </div>
     </div>
   );

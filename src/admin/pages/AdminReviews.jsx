@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { fetchAllReviews, setReviewStatus, deleteReview } from '../../services/admin';
 import { useToast } from '../../context/ToastContext';
 import PageLoader from '../../components/PageLoader';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 export default function AdminReviews() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState(null);
   const { showToast } = useToast();
 
   function load() { fetchAllReviews().then(setReviews).finally(() => setLoading(false)); }
@@ -17,8 +19,9 @@ export default function AdminReviews() {
   async function handleHide(r) {
     try { await setReviewStatus(r.id, { is_hidden: !r.is_hidden }); load(); } catch { showToast('Could not update review.', 'error'); }
   }
-  async function handleDelete(r) {
-    if (!confirm('Delete this review permanently?')) return;
+  async function handleDelete() {
+    const r = pendingDelete;
+    setPendingDelete(null);
     try { await deleteReview(r.id); load(); } catch { showToast('Could not delete review.', 'error'); }
   }
 
@@ -35,14 +38,14 @@ export default function AdminReviews() {
               <tr key={r.id}>
                 <td>{r.products?.name}</td>
                 <td>{r.profiles?.first_name} {r.profiles?.last_name}</td>
-                <td>{'★'.repeat(r.rating)}</td>
+                <td aria-label={`${r.rating} out of 5 stars`}>{'★'.repeat(r.rating)}</td>
                 <td style={{ maxWidth: 240 }}>{r.comment}</td>
                 <td>{new Date(r.created_at).toLocaleDateString()}</td>
                 <td>{r.is_hidden ? 'Hidden' : r.is_approved ? 'Approved' : 'Pending'}</td>
                 <td className="table-actions">
                   {!r.is_approved && <button className="btn btn-sm btn-outline" onClick={() => handleApprove(r)}>Approve</button>}
                   <button className="btn btn-sm btn-outline" onClick={() => handleHide(r)}>{r.is_hidden ? 'Unhide' : 'Hide'}</button>
-                  <button className="btn btn-sm btn-outline" onClick={() => handleDelete(r)}>Delete</button>
+                  <button className="btn btn-sm btn-outline" onClick={() => setPendingDelete(r)}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -50,6 +53,14 @@ export default function AdminReviews() {
         </table>
         {reviews.length === 0 && <p className="empty-state">No reviews yet.</p>}
       </div>
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title="Delete this review?"
+        message="It will be removed permanently. To keep it but stop showing it, use Hide instead."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

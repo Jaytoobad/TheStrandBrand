@@ -3,17 +3,12 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { formatMoney, siteConfig } from '../config/siteConfig';
+import { formatMoney } from '../config/siteConfig';
 import usePageMeta from '../hooks/usePageMeta';
 import { initializePayment } from '../services/orders';
 import posthog, { canCapturePostHog } from '../lib/posthog';
 import DeliveryEstimate from '../components/DeliveryEstimate';
-
-const GHANA_REGIONS = [
-  'Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta',
-  'Northern', 'Upper East', 'Upper West', 'Bono', 'Bono East', 'Ahafo',
-  'Western North', 'Oti', 'Savannah', 'North East',
-];
+import useDeliveryRates from '../hooks/useDeliveryRates';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GHANA_PHONE_PATTERN = /^0\d{9}$/;
@@ -25,6 +20,7 @@ export default function Checkout() {
   const { user, profile } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const { rates, feeByRegion, refresh: refreshRates } = useDeliveryRates();
   const [submitting, setSubmitting] = useState(false);
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [errors, setErrors] = useState({});
@@ -41,8 +37,9 @@ export default function Checkout() {
 
   if (items.length === 0) return <Navigate to="/cart" replace />;
 
-  const deliveryFee = siteConfig.defaultDeliveryFee;
-  const total = subtotal + deliveryFee;
+  // null until the customer picks a region
+  const deliveryFee = form.region ? feeByRegion[form.region] ?? null : null;
+  const total = subtotal + (deliveryFee ?? 0);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -73,6 +70,8 @@ export default function Checkout() {
     }
     if (!form.region) {
       next.region = 'Please select a region.';
+    } else if (deliveryFee == null) {
+      next.region = 'We could not find a delivery fee for this region. Please message us on WhatsApp.';
     }
     if (!form.city.trim()) {
       next.city = 'City / Town is required.';
@@ -139,6 +138,7 @@ export default function Checkout() {
         });
         posthog.captureException(err);
       }
+      if (err.code === 'delivery_fee_changed') refreshRates();
       showToast(err.message || 'Could not start checkout. Please try again.', 'error');
       setSubmitting(false);
     }
@@ -201,8 +201,9 @@ export default function Checkout() {
               aria-describedby={errors.region ? 'checkout-region-error' : undefined}
             >
               <option value="">Select region</option>
-              {GHANA_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+              {rates.map((r) => <option key={r.region} value={r.region}>{r.region}</option>)}
             </select>
+            {deliveryFee != null && <p className="form-hint">Delivery to {form.region}: {formatMoney(deliveryFee)}</p>}
             {errors.region && <p id="checkout-region-error" className="form-error" role="alert">{errors.region}</p>}
           </div>
           <div className="form-group">
@@ -247,7 +248,7 @@ export default function Checkout() {
         </div>
 
         <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
-          {submitting ? 'Starting payment…' : `Pay ${formatMoney(total)} with Paystack`}
+          {submitting ? 'Starting payment…' : deliveryFee != null ? `Pay ${formatMoney(total)} with Paystack` : 'Pay with Paystack'}
         </button>
       </form>
 
@@ -260,8 +261,9 @@ export default function Checkout() {
             <span>{formatMoney(i.unitPrice * i.quantity)}</span>
           </div>
         ))}
-        <div className="summary-row"><span>Delivery Fee</span><span>{formatMoney(deliveryFee)}</span></div>
+        <div className="summary-row"><span>Delivery Fee</span><span>{deliveryFee != null ? formatMoney(deliveryFee) : 'Select your region'}</span></div>
         <div className="summary-row summary-total"><span>Total</span><span>{formatMoney(total)}</span></div>
+        {deliveryFee == null && <p className="form-hint">Total shown without delivery until you choose a region.</p>}
       </aside>
     </div>
   );

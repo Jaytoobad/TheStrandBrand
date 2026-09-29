@@ -27,7 +27,7 @@ export default function AdminAnalytics() {
     <div>
       <div className="admin-header">
         <h1>Analytics</h1>
-        <select value={range} onChange={(e) => setRange(Number(e.target.value))}>
+        <select className="admin-select" aria-label="Date range" value={range} onChange={(e) => setRange(Number(e.target.value))}>
           <option value={7}>Last 7 days</option>
           <option value={30}>Last 30 days</option>
           <option value={90}>Last 3 months</option>
@@ -43,7 +43,7 @@ export default function AdminAnalytics() {
         <div className="admin-stat-card"><span>{ordersInRange}</span><label>Paid Orders (selected range)</label></div>
       </div>
 
-      <h3 style={{ marginBottom: 12 }}>Low-Stock Products</h3>
+      <h3 className="admin-table-title">Low-Stock Products</h3>
       <div className="data-table-wrap">
         <table className="data-table">
           <thead><tr><th>Product</th><th>Stock</th></tr></thead>

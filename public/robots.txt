@@ -1,3 +1,9 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /checkout
+Disallow: /cart
+Disallow: /order-confirmation
 
+Sitemap: https://the-strand-brand.vercel.app/sitemap.xml

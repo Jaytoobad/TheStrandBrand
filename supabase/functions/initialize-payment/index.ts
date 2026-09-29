@@ -72,6 +72,28 @@ Deno.serve(async (req) => {
       return json({ error: 'Missing required checkout information.' }, 400);
     }
 
+    // --- Delivery fee comes from the database, never from the browser. ---
+    const region = String(delivery.region).trim();
+    const { data: rate, error: rateErr } = await supabase
+      .from('delivery_rates')
+      .select('fee')
+      .eq('region', region)
+      .maybeSingle();
+    if (rateErr) throw rateErr;
+    if (!rate) {
+      return json({ error: 'We do not deliver to that region yet. Please choose another region or message us on WhatsApp.' }, 400);
+    }
+    const deliveryFee = Number(rate.fee);
+    // If the admin changed the fee while the customer was on the checkout
+    // page, stop and let them see the new amount before paying.
+    if (delivery.fee != null && Number(delivery.fee) !== deliveryFee) {
+      return json({
+        error: `Delivery to ${region} is now GH₵${deliveryFee.toFixed(2)}. Please check the new total and try again.`,
+        code: 'delivery_fee_changed',
+        deliveryFee,
+      }, 409);
+    }
+
     // --- Re-price everything from the database. Never trust client prices. ---
     let subtotal = 0;
     const lineItems = [];
@@ -96,6 +118,7 @@ Deno.serve(async (req) => {
           .from('product_variants')
           .select('id, option_name, option_value, price_adjustment, stock')
           .eq('id', item.variantId)
+          .eq('product_id', product.id) // the option must belong to this product
           .single();
         if (vErr || !variant) return json({ error: 'Selected option unavailable.' }, 400);
         unitPrice += Number(variant.price_adjustment);
@@ -103,7 +126,7 @@ Deno.serve(async (req) => {
         variantSummary = `${variant.option_name}: ${variant.option_value}`;
       }
 
-      if (item.quantity < 1 || (!product.allow_preorder && item.quantity > availableStock)) {
+      if (!Number.isInteger(item.quantity) || item.quantity < 1 || (!product.allow_preorder && item.quantity > availableStock)) {
         return json({ error: `Not enough stock for ${product.name}.` }, 400);
       }
 
@@ -121,7 +144,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    const deliveryFee = Number(delivery.fee) || 0;
     const discount = 0; // hook for future promo codes
     const total = subtotal + deliveryFee - discount;
 
@@ -140,7 +162,7 @@ Deno.serve(async (req) => {
         total,
         status: 'pending_payment',
         payment_status: 'pending',
-        delivery_region: delivery.region,
+        delivery_region: region,
         delivery_city: delivery.city,
         delivery_area: delivery.area ?? null,
         delivery_digital_address: delivery.digitalAddress ?? null,

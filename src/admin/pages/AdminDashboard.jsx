@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchDashboardStats, fetchRecentOrders } from '../../services/admin';
-import { formatMoney, formatOrderStatus } from '../../config/siteConfig';
+import { formatMoney } from '../../config/siteConfig';
 import PageLoader from '../../components/PageLoader';
+import StatusPill from '../components/StatusPill';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -12,10 +13,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     Promise.all([fetchDashboardStats(), fetchRecentOrders()])
       .then(([s, o]) => { setStats(s); setOrders(o); })
+      .catch(() => setStats(null))
       .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <PageLoader />;
+  if (!stats) return <p className="empty-state">Could not load the dashboard. Please refresh the page.</p>;
 
   return (
     <div>
@@ -32,7 +35,10 @@ export default function AdminDashboard() {
         <div className="admin-stat-card"><span>{stats.lowStockCount}</span><label>Low Stock Products</label></div>
       </div>
 
-      <h2 style={{ marginBottom: 16 }}>Recent Orders</h2>
+      <div className="admin-section-title">
+        <h2>Recent Orders</h2>
+        <Link to="/admin/orders" className="account-inline-link">View all</Link>
+      </div>
       <div className="data-table-wrap">
         <table className="data-table">
           <thead>
@@ -44,13 +50,14 @@ export default function AdminDashboard() {
                 <td><Link to={`/admin/orders/${o.id}`}>{o.order_number}</Link></td>
                 <td>{o.customer_name}</td>
                 <td>{formatMoney(o.total)}</td>
-                <td>{o.payment_status}</td>
-                <td>{formatOrderStatus(o.status)}</td>
+                <td><StatusPill status={o.payment_status} /></td>
+                <td><StatusPill status={o.status} /></td>
                 <td>{new Date(o.created_at).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        {orders.length === 0 && <p className="empty-state">No orders yet.</p>}
       </div>
     </div>
   );

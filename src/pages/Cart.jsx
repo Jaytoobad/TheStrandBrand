@@ -1,14 +1,17 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { formatMoney, siteConfig } from '../config/siteConfig';
+import { formatMoney } from '../config/siteConfig';
+import { ACCRA_REGION } from '../config/delivery';
 import DeliveryEstimate from '../components/DeliveryEstimate';
 import usePageMeta from '../hooks/usePageMeta';
+import useDeliveryRates from '../hooks/useDeliveryRates';
 
 export default function Cart() {
   usePageMeta('Cart', 'Review your cart items and proceed to checkout.');
   const { items, updateQuantity, removeItem, subtotal } = useCart();
-  const deliveryFee = items.length ? siteConfig.defaultDeliveryFee : 0;
-  const total = subtotal + deliveryFee;
+  // The fee depends on the region, which is chosen at checkout.
+  const { feeByRegion, lowestFee } = useDeliveryRates();
+  const accraFee = feeByRegion[ACCRA_REGION];
 
   if (items.length === 0) {
     return (
@@ -46,8 +49,11 @@ export default function Cart() {
         <h2>Order Summary</h2>
         <DeliveryEstimate compact />
         <div className="summary-row"><span>Subtotal</span><span>{formatMoney(subtotal)}</span></div>
-        <div className="summary-row"><span>Delivery Fee</span><span>{formatMoney(deliveryFee)}</span></div>
-        <div className="summary-row summary-total"><span>Total</span><span>{formatMoney(total)}</span></div>
+        <div className="summary-row"><span>Delivery Fee</span><span>{lowestFee != null ? `From ${formatMoney(lowestFee)}` : 'At checkout'}</span></div>
+        <div className="summary-row summary-total"><span>Subtotal</span><span>{formatMoney(subtotal)}</span></div>
+        <p className="form-hint cart-delivery-note">
+          {accraFee != null ? `${formatMoney(accraFee)} within Greater Accra. ` : ''}Your delivery fee is added at checkout once you pick your region.
+        </p>
         <Link to="/checkout" className="btn btn-primary btn-block">Proceed to Checkout</Link>
         <Link to="/shop" className="btn btn-outline btn-block" style={{ marginTop: 10 }}>Continue Shopping</Link>
       </aside>

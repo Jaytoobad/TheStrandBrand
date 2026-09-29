@@ -25,9 +25,10 @@ export async function fetchDashboardStats() {
   const today = new Date().toISOString().slice(0, 10);
   const todaySales = paidOrders.data?.filter((o) => o.created_at.startsWith(today)).reduce((sum, o) => sum + Number(o.total), 0) || 0;
 
-  const { data: lowStock } = await supabase.from('products').select('*', { count: 'exact', head: true }).lte('stock', 5).gt('stock', 0);
+  // head: true returns only the count (data is always null), so read `count`.
+  const { count: lowStockCount } = await supabase.from('products').select('*', { count: 'exact', head: true }).lte('stock', 5);
 
-  return { totalSales, todaySales, totalOrders, pendingOrders, deliveredOrders, totalCustomers, totalProducts, lowStockCount: lowStock?.length ?? 0 };
+  return { totalSales, todaySales, totalOrders, pendingOrders, deliveredOrders, totalCustomers, totalProducts, lowStockCount: lowStockCount ?? 0 };
 }
 
 export async function fetchRecentOrders(limit = 8) {
@@ -144,7 +145,9 @@ export async function fetchAllOrders({ status, paymentStatus, search } = {}) {
   let query = supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false });
   if (status) query = query.eq('status', status);
   if (paymentStatus) query = query.eq('payment_status', paymentStatus);
-  if (search) query = query.or(`order_number.ilike.%${search}%,customer_name.ilike.%${search}%,customer_email.ilike.%${search}%`);
+  // Commas and brackets would break the .or() filter syntax, so strip them.
+  const term = search?.replace(/[,()%*]/g, ' ').trim();
+  if (term) query = query.or(`order_number.ilike.%${term}%,customer_name.ilike.%${term}%,customer_email.ilike.%${term}%`);
   const { data, error } = await query;
   if (error) throw error;
   return data;
@@ -218,4 +221,18 @@ export async function updateProductStock(id, stock) {
 export async function updateVariantStock(id, stock) {
   const { error } = await supabase.from('product_variants').update({ stock }).eq('id', id);
   if (error) throw error;
+}
+
+// --- Delivery fees ---
+// changes: [{ region, fee }]. RLS silently skips rows a non-admin can't
+// update, so an empty result is treated as a failure.
+export async function updateDeliveryRates(changes) {
+  const updatedAt = new Date().toISOString();
+  const results = await Promise.all(
+    changes.map(({ region, fee }) =>
+      supabase.from('delivery_rates').update({ fee, updated_at: updatedAt }).eq('region', region).select('region')),
+  );
+  const failed = results.find((r) => r.error || !r.data?.length);
+  if (failed) throw failed.error || new Error('Delivery fee update was not allowed.');
+  await logActivity('update_delivery_rates', { changes });
 }

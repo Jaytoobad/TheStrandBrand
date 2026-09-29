@@ -27,8 +27,8 @@ export const siteConfig = {
   // Shorter line shown on phones so the bar stays on one line
   announcementBarShort: 'Premium Wigs • Delivered To Your Door',
 
-  // Flat delivery fee used at checkout until you wire up per-region rates.
-  defaultDeliveryFee: 30,
+  // Delivery fees are per region and edited in Admin → Settings
+  // (database table `delivery_rates`). Fallback values: src/config/delivery.js
 
   // --- Hero slides — replace image with your own uploaded/hosted image URLs ---
   heroSlides: [

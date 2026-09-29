@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchAllOrders } from '../../services/admin';
-import { formatMoney, formatOrderStatus } from '../../config/siteConfig';
+import { formatMoney, formatOrderStatus } from '../../config/siteConfig'; // formatOrderStatus: filter labels
 import PageLoader from '../../components/PageLoader';
+import StatusPill from '../components/StatusPill';
 
 const STATUSES = ['pending_payment', 'paid', 'processing', 'packaged', 'dispatched', 'in_transit', 'delivered', 'cancelled', 'refunded'];
 
@@ -17,6 +18,7 @@ export default function AdminOrders() {
     setLoading(true);
     fetchAllOrders({ status: status || undefined, paymentStatus: paymentStatus || undefined, search: search || undefined })
       .then(setOrders)
+      .catch(() => setOrders([]))
       .finally(() => setLoading(false));
   }
 
@@ -27,7 +29,7 @@ export default function AdminOrders() {
       <div className="admin-header"><h1>Orders</h1></div>
 
       <div className="admin-toolbar">
-        <input placeholder="Search order #, customer, email…" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} />
+        <input type="search" aria-label="Search orders" placeholder="Search order #, customer, email…" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} />
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">All statuses</option>
           {STATUSES.map((s) => <option key={s} value={s}>{formatOrderStatus(s)}</option>)}
@@ -50,11 +52,11 @@ export default function AdminOrders() {
               {orders.map((o) => (
                 <tr key={o.id}>
                   <td><Link to={`/admin/orders/${o.id}`}>{o.order_number}</Link></td>
-                  <td>{o.customer_name}<br /><span style={{ color: 'var(--color-text-muted)', fontSize: '0.78rem' }}>{o.customer_email}</span></td>
+                  <td>{o.customer_name}<span className="table-subtext">{o.customer_email}</span></td>
                   <td>{o.order_items?.length}</td>
                   <td>{formatMoney(o.total)}</td>
-                  <td>{o.payment_status}</td>
-                  <td>{formatOrderStatus(o.status)}</td>
+                  <td><StatusPill status={o.payment_status} /></td>
+                  <td><StatusPill status={o.status} /></td>
                   <td>{new Date(o.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}

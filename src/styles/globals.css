@@ -1154,3 +1154,94 @@ html, body { overflow-x: hidden; }
 }
 .data-table td:first-child a { white-space: nowrap; }
 .admin-stat-card span, .stat-card span { font-family: var(--font-body); }
+
+/* ===== ADMIN: shared pieces ===== */
+.admin-pill {
+  display: inline-block; padding: 3px 10px; border-radius: 100px;
+  font-size: 0.72rem; font-weight: 600; line-height: 1.5; text-transform: capitalize; white-space: nowrap;
+  background: #f1ece9; color: var(--color-text);
+}
+.admin-pill.is-good { background: #e3f1e7; color: #2f6b42; }
+.admin-pill.is-info { background: #e6eef8; color: #2d5487; }
+.admin-pill.is-warn { background: #fbf0dc; color: #8a5a14; }
+.admin-pill.is-bad { background: #f8e1de; color: #9b2f24; }
+.admin-pill.is-neutral { background: #f1ece9; color: var(--color-text-muted); }
+.table-subtext { display: block; color: var(--color-text-muted); font-size: 0.78rem; }
+.admin-section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.admin-section-title h2 { margin: 0; }
+.admin-table-title { margin: 0 0 12px; }
+.admin-table-gap { margin-bottom: 32px; }
+.admin-page-hint { margin: -10px 0 18px; font-size: 0.85rem; color: var(--color-text-muted); }
+.admin-select { padding: 9px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fff; }
+.stock-input { width: 88px; padding: 7px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.admin-view-shop { display: block; margin-bottom: 8px; color: #fff; font-size: 0.8rem; }
+.admin-view-shop:hover { text-decoration: underline; }
+
+.admin-panel {
+  background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  padding: 22px 24px; margin-bottom: 20px;
+}
+.admin-panel > h2, .admin-panel-header h2 { font-size: 1.3rem; margin: 0 0 14px; }
+.admin-panel-header p { margin: -6px 0 18px; font-size: 0.88rem; color: var(--color-text-muted); max-width: 640px; }
+.admin-panel .data-table-wrap { border-radius: var(--radius-sm); }
+
+.admin-info-list { margin: 0 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.admin-info-list > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; font-size: 0.9rem; }
+.admin-info-list dt { color: var(--color-text-muted); }
+.admin-info-list dd { margin: 0; overflow-wrap: anywhere; }
+.admin-info-list a { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ===== ADMIN: order details ===== */
+.admin-order-header { align-items: flex-start; }
+.admin-order-header h1 { margin: 0; }
+.admin-order-date { margin: 4px 0 0; font-size: 0.85rem; color: var(--color-text-muted); }
+.admin-order-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-order-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+.admin-order-grid .admin-panel { margin-bottom: 0; }
+.admin-order-main, .admin-order-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+@media (min-width: 1100px) { .admin-order-grid { grid-template-columns: minmax(0, 1fr) 340px; } }
+.admin-inline-form { display: flex; gap: 10px; flex-wrap: wrap; }
+.admin-inline-form select, .admin-inline-form input {
+  padding: 9px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); min-width: 0;
+}
+.admin-inline-form input { flex: 1 1 220px; }
+.status-history-note { flex-basis: 100%; font-style: italic; }
+
+/* ===== ADMIN: delivery fees ===== */
+.delivery-bulk {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px;
+  padding: 14px 16px; margin-bottom: 16px; background: var(--color-blush); border-radius: var(--radius-sm);
+}
+.delivery-bulk label { font-size: 0.88rem; font-weight: 600; }
+.delivery-bulk-controls { display: flex; gap: 8px; align-items: center; }
+.fee-input {
+  display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; background: #fff;
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+}
+.fee-input:focus-within { border-color: var(--color-black); }
+.fee-input span { font-size: 0.85rem; color: var(--color-text-muted); }
+.fee-input input { width: 90px; padding: 8px 0; border: none; background: transparent; outline: none; font: inherit; }
+.fee-input:has(input[aria-invalid="true"]) { border-color: var(--color-error); }
+.delivery-rates-table { min-width: 0; }
+.delivery-rates-table td:first-child label { font-weight: 600; margin-right: 8px; }
+.delivery-rates-table td:last-child, .delivery-rates-table th:last-child { width: 1%; white-space: nowrap; }
+.delivery-rates-table tr.is-changed td { background: #fffaf0; }
+.delivery-was { display: block; font-size: 0.75rem; color: var(--color-text-muted); }
+.admin-save-bar {
+  position: sticky; bottom: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  margin-top: 16px; padding: 12px 0; background: #fff; border-top: 1px solid var(--color-border);
+  font-size: 0.85rem; color: var(--color-text-muted);
+}
+.admin-save-bar > div { display: flex; gap: 8px; }
+.cart-delivery-note { margin: 4px 0 16px; }
+
+@media (max-width: 640px) {
+  .admin-panel { padding: 16px; }
+  .admin-info-list > div { grid-template-columns: 1fr; gap: 2px; }
+  .delivery-bulk-controls { width: 100%; }
+  .delivery-bulk-controls .fee-input { flex: 1; }
+  .delivery-bulk-controls .fee-input input { width: 100%; }
+  .admin-save-bar > div { width: 100%; }
+  .admin-save-bar .btn { flex: 1; }
+}

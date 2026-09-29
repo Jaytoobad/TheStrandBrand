@@ -27,16 +27,21 @@ Last reviewed: 29 September 2026
 |---|---|---|
 | [ ] | Hero slide 1 photo | `public/assets/hero-placeholder-1.png` |
 | [ ] | Hero slide 2 photo | `public/assets/hero-placeholder-2.png` |
+| [x] | "The Collection" photo on the home page | Done: `src/assets/collection-hair.jpg` (bundles + 3 wigs) |
 | [ ] | Product photos | Upload in **Admin → Products** (fallback: `public/assets/placeholder-product.jpg`) |
 | [ ] | Category photos | Upload in **Admin → Categories** (fallback: `public/assets/placeholder-category.jpg`) |
-| [ ] | Link-preview image for WhatsApp/Instagram shares | None yet. Add a 1200×630 image and an `og:image` tag in `index.html` |
+| [x] | Link-preview image for WhatsApp/Instagram shares | Done: `public/assets/og-image.png` (logo on pink, 1200×630) |
 | [ ] | Unused founder photo | `public/assets/placeholder-ceo.jpg` isn't used anywhere. Delete it, or send a real photo so it can go on the About page |
+| [ ] | Old collection photo | `src/assets/background.jpg.jpg` (3.9 MB) is no longer used. Safe to delete |
 
 ## 3. Delivery and pricing
 
+Fees are edited in **Admin → Settings → Delivery fees** (no code change needed). The server charges whatever is saved there.
+
 | Done | Item | Notes |
 |---|---|---|
-| [ ] | Delivery fee | One flat **GH₵30** for every region (`defaultDeliveryFee`). Decide whether Accra and other regions should cost different amounts |
+| [x] | Greater Accra fee | **GH₵35** (confirmed) |
+| [ ] | Fees for the other 15 regions | **Owner to confirm.** Placeholders in the GH₵45–60 range by distance: Central/Eastern/Volta 45 · Ashanti/Western/Oti 50 · Bono/Bono East/Ahafo/Western North 55 · Northern/Savannah/North East/Upper East/Upper West 60. Change them in Admin → Settings |
 | [ ] | Delivery times | Emails and the site say about 7 days to prepare plus 2–3 days to deliver. Confirm this is right |
 
 ## 4. Legal pages
@@ -59,7 +64,7 @@ Last reviewed: 29 September 2026
 ## 6. Custom domain (when you buy one)
 
 - [ ] Add the domain in Vercel → Project → Settings → Domains
-- [ ] Vercel env var `VITE_PUBLIC_SITE_URL` → `https://yourdomain`, then redeploy
+- [ ] Vercel env var `VITE_PUBLIC_SITE_URL` → `https://yourdomain`, then redeploy (this also updates the link preview, sitemap and robots.txt)
 - [ ] Supabase → Authentication → URL Configuration: Site URL + Redirect URL `https://yourdomain/reset-password`
 - [ ] Supabase Edge Function secret `PUBLIC_SITE_URL=https://yourdomain`
 - [ ] Brevo: add and verify the domain (DNS records), then change the sender to `hello@yourdomain`
@@ -80,5 +85,10 @@ Last reviewed: 29 September 2026
 
 - [ ] First admin account created (register, then run `update profiles set role = 'admin' where email = '…';` in the Supabase SQL editor)
 - [ ] PostHog: confirm `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN` and `VITE_PUBLIC_POSTHOG_HOST` are set in Vercel (analytics are silently off without them)
-- [ ] `sitemap.xml` for Google (not created yet)
-- [ ] Google Search Console / Google Business Profile (optional)
+- [x] `sitemap.xml` and `robots.txt`: built automatically on every deploy (`seo.config.js`), including every active product. New products appear after the next deploy
+- [ ] Google Search Console: add the site, then submit `https://the-strand-brand.vercel.app/sitemap.xml` (use your own domain once you have one)
+- [ ] Google Business Profile (optional)
+
+## 9. Marketing
+
+- [ ] Short promo video ("brag" skill). Needs FFmpeg installed on this PC; not made yet

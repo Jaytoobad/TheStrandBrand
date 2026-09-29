@@ -73,7 +73,8 @@ the-strand-brand/
   domain (products, orders, auth, wishlist, reviews, addresses, admin). Pages
   import from here rather than calling Supabase directly.
 - **config/siteConfig.js** — the single file to edit for WhatsApp number,
-  socials, hero banners, currency, and delivery fee.
+  socials, hero banners and currency. Delivery fees are per region and are
+  edited in **Admin → Settings** (table `delivery_rates`, migration 0007).
 - **supabase/** — everything that runs on the server: the database schema and
   the three payment Edge Functions.
 
@@ -364,7 +365,7 @@ and redeploy to update it everywhere:
 | Contact email | `contactEmail` |
 | Hero images/text | `heroSlides` array |
 | Announcement bar text | `announcementBar` |
-| Default delivery fee | `defaultDeliveryFee` |
+| Delivery fees | Not here: **Admin → Settings → Delivery fees** (per region, charged server-side) |
 
 Supabase and Paystack credentials go in `.env` (frontend keys) and Supabase
 Edge Function secrets (server-side keys) — see Sections 6 and 12 above.

@@ -67,8 +67,12 @@ export default function AdminCategories() {
   }
 
   async function toggleActive(c) {
-    await setCategoryActive(c.id, !c.is_active);
-    load();
+    try {
+      await setCategoryActive(c.id, !c.is_active);
+      load();
+    } catch {
+      showToast('Could not update category.', 'error');
+    }
   }
 
   if (loading) return <PageLoader />;

@@ -14,7 +14,11 @@ export async function initializePayment(payload) {
     body: JSON.stringify(payload),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Could not start payment.');
+  if (!res.ok) {
+    const err = new Error(data.error || 'Could not start payment.');
+    err.code = data.code; // e.g. 'delivery_fee_changed'
+    throw err;
+  }
   return data;
 }
 
