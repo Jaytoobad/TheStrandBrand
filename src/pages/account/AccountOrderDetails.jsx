@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import AccountLayout from './AccountLayout';
 import { fetchOrderById } from '../../services/orders';
-import { formatMoney, formatOrderStatus } from '../../config/siteConfig';
+import { formatMoney, formatOrderStatus, orderHelpWhatsappUrl, siteConfig } from '../../config/siteConfig';
+import WhatsAppIcon from '../../components/icons/WhatsAppIcon';
 import PageLoader from '../../components/PageLoader';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -93,7 +94,29 @@ export default function AccountOrderDetails() {
           </ul>
         </section>
       )}
+
+      <OrderHelp orderNumber={order.order_number} />
     </AccountLayout>
+  );
+}
+
+function OrderHelp({ orderNumber }) {
+  return (
+    <aside className="order-help" aria-labelledby="order-help-title">
+      <div className="order-help-text">
+        <h3 id="order-help-title">Need help with this order?</h3>
+        <p>Message us on WhatsApp ({siteConfig.whatsappDisplay}). Your order number is already filled in.</p>
+      </div>
+      <a
+        href={orderHelpWhatsappUrl(orderNumber)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn btn-whatsapp btn-sm"
+      >
+        <WhatsAppIcon size={18} />
+        Chat on WhatsApp
+      </a>
+    </aside>
   );
 }
 

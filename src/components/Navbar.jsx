@@ -27,7 +27,10 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="announcement-bar">{siteConfig.announcementBar}</div>
+      <div className="announcement-bar">
+        <span className="announcement-full">{siteConfig.announcementBar}</span>
+        <span className="announcement-short" aria-hidden="true">{siteConfig.announcementBarShort}</span>
+      </div>
 
       <header className="navbar">
         <div className="container navbar-inner">

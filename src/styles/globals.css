@@ -63,6 +63,8 @@ button { font-family: inherit; cursor: pointer; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-block { width: 100%; }
 .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
+.btn-whatsapp { background: var(--color-whatsapp); color: #fff; }
+.btn-whatsapp:hover { background: var(--color-whatsapp-dark); }
 
 .card {
   background: var(--color-surface);
@@ -187,6 +189,15 @@ html, body { overflow-x: hidden; }
   font-size: 0.75rem;
   letter-spacing: 0.05em;
   padding: 8px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.announcement-short { display: none; }
+@media (max-width: 640px) {
+  .announcement-bar { font-size: 0.7rem; letter-spacing: 0.04em; padding: 7px 12px; }
+  .announcement-full { display: none; }
+  .announcement-short { display: inline; }
 }
 
 .navbar {
@@ -302,7 +313,7 @@ html, body { overflow-x: hidden; }
   left: 22px;
   z-index: 150;
   width: 54px; height: 54px;
-  background: #25D366;
+  background: var(--color-whatsapp);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   box-shadow: var(--shadow-md);
@@ -1046,11 +1057,38 @@ html, body { overflow-x: hidden; }
 .category-image-preview.is-broken { border-color: var(--color-error); border-style: dashed; }
  /* ============================= BRAND STORY ============================= */ .brand-story { padding: 70px 0; background: var(--color-bg); } .brand-story-inner { display: grid; gap: 36px; grid-template-columns: 1fr; align-items: center; } .brand-story-inner img { display: block; width: 100%; height: auto; max-height: 70vh; object-fit: contain; border-radius: var(--radius-lg); } .brand-story-label { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-black); font-weight: 700; } .brand-story-text h2 { margin: 10px 0 16px; font-size: 1.6rem; } .brand-story-text p { color: var(--color-text-muted); margin-bottom: 24px; max-width: 480px; } @media (min-width: 800px) { .brand-story-inner { grid-template-columns: 1fr 1fr; } } 
  @media (max-width: 640px) {
-  .navbar-inner { gap: 8px; padding: 12px 14px; }
-  .navbar-brand { font-size: 1rem; gap: 6px; }
+  /* Same 16px side gutter as .container so icons line up with page content */
+  .navbar-inner { gap: 6px; padding: 8px 16px; }
+  .hamburger { padding: 6px 4px; margin-left: -4px; }
+  .navbar-brand { font-size: 1rem; gap: 6px; min-width: 0; }
   .navbar-logo { height: 26px; }
-  .navbar-actions { gap: 12px; }
-  .navbar-actions svg { width: 18px; height: 18px; }
+  /* 34px tap targets; the last icon's edge sits on the gutter, not the screen edge */
+  .navbar-actions { gap: 2px; margin-right: -8px; }
+  .navbar-actions a, .navbar-actions button { width: 34px; height: 34px; align-items: center; justify-content: center; padding: 0; }
+  .navbar-actions svg { width: 19px; height: 19px; }
+  .cart-count { top: 1px; right: 0; width: 16px; height: 16px; font-size: 0.6rem; }
+}
+@media (max-width: 374px) {
+  .navbar-brand { font-size: 0.92rem; gap: 5px; }
+  .navbar-logo { height: 22px; }
+  .navbar-actions a, .navbar-actions button { width: 31px; }
+  .navbar-actions { gap: 0; margin-right: -6px; }
+}
+
+/* Order details: WhatsApp help card */
+.order-help {
+  margin-top: 28px; padding: 18px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap;
+  background: var(--color-blush); border-radius: var(--radius-md);
+}
+.order-help-text { min-width: 0; flex: 1 1 260px; }
+.order-help h3 { margin: 0 0 4px; font-size: 1.15rem; }
+.order-help p { margin: 0; font-size: 0.86rem; color: var(--color-text-muted); }
+.order-help .btn { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 640px) {
+  .order-help { padding: 16px; }
+  /* Right-aligned so the floating WhatsApp button (bottom-left) never covers it */
+  .order-help .btn { margin-left: auto; padding: 11px 18px; }
 }
 /* ===== ADMIN MOBILE LAYOUT ===== */
 @media (max-width: 900px) {

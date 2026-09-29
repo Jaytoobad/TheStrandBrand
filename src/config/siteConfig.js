@@ -24,6 +24,8 @@ export const siteConfig = {
   currencySymbol: 'GH₵',
 
   announcementBar: 'Premium Wigs • Quality You Can Trust • Delivered To Your Door',
+  // Shorter line shown on phones so the bar stays on one line
+  announcementBarShort: 'Premium Wigs • Delivered To Your Door',
 
   // Flat delivery fee used at checkout until you wire up per-region rates.
   defaultDeliveryFee: 30,
@@ -72,6 +74,11 @@ export function getPublicSiteUrl() {
 
 export function whatsappUrl(message = siteConfig.whatsappMessage) {
   return `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(message)}`;
+}
+
+// Pre-filled WhatsApp message so the team sees the order number straight away
+export function orderHelpWhatsappUrl(orderNumber) {
+  return whatsappUrl(`Hi ${siteConfig.brandName}, I need help with my order ${orderNumber}.`);
 }
 
 export function telUrl() {
