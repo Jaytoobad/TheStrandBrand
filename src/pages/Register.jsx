@@ -4,7 +4,7 @@ import { signUp } from '../services/auth';
 import { useToast } from '../context/ToastContext';
 import usePageMeta from '../hooks/usePageMeta';
 import { friendlyAuthError } from './Login';
-import posthog, { isPostHogConfigured } from '../lib/posthog';
+import posthog, { canCapturePostHog } from '../lib/posthog';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GHANA_PHONE_PATTERN = /^0\d{9}$/;
@@ -64,17 +64,13 @@ export default function Register() {
     setLoading(true);
     try {
       const { user } = await signUp(form);
-      if (user && isPostHogConfigured) {
-        posthog.identify(user.id, {
-          email: user.email,
-          name: `${form.firstName} ${form.lastName}`.trim(),
-          phone: form.phone,
-        });
+      if (user && canCapturePostHog()) {
+        posthog.identify(user.id);
         posthog.capture('account_registered', { method: 'password' });
       }
       setVerifySent(true);
     } catch (err) {
-      if (isPostHogConfigured) posthog.captureException(err);
+      if (canCapturePostHog()) posthog.captureException(err);
       showToast(friendlyAuthError(err), 'error');
     } finally {
       setLoading(false);

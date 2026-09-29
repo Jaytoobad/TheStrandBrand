@@ -57,6 +57,14 @@ export function formatCategoryName(name) {
   return String(name || '').replace(/[-–—]+/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+export function getPublicSiteUrl() {
+  const configuredUrl = import.meta.env.VITE_PUBLIC_SITE_URL?.trim().replace(/\/+$/, '');
+  if (configuredUrl) return configuredUrl;
+  // Fall back instead of throwing so password reset keeps working if the env var is missing.
+  if (import.meta.env.PROD) console.warn('VITE_PUBLIC_SITE_URL is not set; falling back to the current origin.');
+  return window.location.origin;
+}
+
 export function whatsappUrl(message = siteConfig.whatsappMessage) {
   return `https://wa.me/${siteConfig.whatsappNumber}?text=${encodeURIComponent(message)}`;
 }

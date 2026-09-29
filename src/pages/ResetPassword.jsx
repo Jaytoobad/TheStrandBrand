@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { updatePassword } from '../services/auth';
 import { useToast } from '../context/ToastContext';
+import usePageMeta from '../hooks/usePageMeta';
 
 // Supabase Auth redirects here (with a recovery session already active)
 // after the user clicks the emailed reset link.
 export default function ResetPassword() {
+  usePageMeta('Set New Password', 'Choose a new password for your account.');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,8 +20,8 @@ export default function ResetPassword() {
     setLoading(true);
     try {
       await updatePassword(password);
-      showToast('Password updated. Please log in.');
-      navigate('/login');
+      showToast('Password updated.');
+      navigate('/account');
     } catch {
       showToast('Could not update password. The link may have expired.', 'error');
     } finally {
@@ -31,8 +33,8 @@ export default function ResetPassword() {
     <div className="container section auth-page">
       <form className="auth-form card" onSubmit={handleSubmit}>
         <h1>Set New Password</h1>
-        <div className="form-group"><label>New Password</label><input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-        <div className="form-group"><label>Confirm Password</label><input required type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} /></div>
+        <div className="form-group"><label>New Password</label><input required minLength={8} type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+        <div className="form-group"><label>Confirm Password</label><input required minLength={8} type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} /></div>
         <button className="btn btn-primary btn-block" disabled={loading}>{loading ? 'Updating…' : 'Update Password'}</button>
       </form>
     </div>

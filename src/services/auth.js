@@ -1,5 +1,6 @@
-import posthog, { isPostHogConfigured } from '../lib/posthog';
+import posthog, { canCapturePostHog } from '../lib/posthog';
 import { supabase } from '../lib/supabaseClient';
+import { getPublicSiteUrl } from '../config/siteConfig';
 
 export async function signUp({ email, password, firstName, lastName, phone }) {
   const { data, error } = await supabase.auth.signUp({
@@ -24,12 +25,12 @@ export async function signIn({ email, password }) {
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
-  if (isPostHogConfigured) posthog.reset();
+  if (canCapturePostHog()) posthog.reset();
 }
 
 export async function requestPasswordReset(email) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
+    redirectTo: `${getPublicSiteUrl()}/reset-password`,
   });
   if (error) throw error;
 }

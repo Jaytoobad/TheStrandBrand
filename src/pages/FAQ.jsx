@@ -1,14 +1,15 @@
 import usePageMeta from '../hooks/usePageMeta';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 const faqs = [
-  { q: 'How do I order?', a: 'Browse the shop, add your favourite wigs to your cart, and check out securely with Paystack. You can also check out as a guest without creating an account.' },
-  { q: 'What payment methods are available?', a: 'We accept card payments and Mobile Money through Paystack.' },
-  { q: 'How long does delivery take?', id: 'delivery', a: 'Delivery typically takes 2 to 5 business days within Ghana, depending on your location.' },
-  { q: 'How do I track my order?', a: 'Use the "Track Order" page with your order number and the email or phone number used at checkout, or check "My Orders" if you have an account.' },
-  { q: 'Can I change my order?', a: 'Contact us as soon as possible after ordering. We can usually make changes before your order is packaged.' },
-  { q: "What happens if my selected wig is out of stock?", a: "We'll notify you and offer a refund or a similar alternative style." },
-  { q: 'Do you accept returns?', id: 'returns', a: 'Yes, within 48 hours of delivery for unworn, unaltered items. See our Returns & Refund Policy for details.' },
-  { q: 'How do I contact customer support?', a: 'Reach us via WhatsApp using the floating button, or through our Contact page.' },
+  { q: 'What does made to order mean?', a: 'Your wig is prepared after your preorder is confirmed and is made to your selected specifications.' },
+  { q: 'How long will my order take?', id: 'delivery', a: 'Allow about 7 days for preparation and 2 to 3 days for delivery. The estimated total is 9 to 10 days.' },
+  { q: 'What should I confirm before paying?', a: 'Check your length, colour, density, lace type, style, and any other selected specifications before placing your order.' },
+  { q: 'Can I cancel or get a refund after ordering?', id: 'returns', a: 'Preordered and custom made hair orders are non refundable once payment is made and the order is confirmed. Supplier, shipping, or customs delays do not qualify for a refund.', policyLink: true },
+  { q: 'What should I do when my order arrives?', a: 'Record a clear unboxing video before opening or handling the hair. Check your order during unboxing and contact us immediately if anything is wrong.' },
+  { q: 'Can I request a return or exchange?', a: 'Report any problem within 24 hours of delivery. Do not cut or alter lace, wash, bleach, dye, pluck, style, wear, or otherwise alter the hair before reporting the issue.', policyLink: true },
+  { q: 'How do I track my order?', a: 'Use the Track Order page with your order number and the email or phone number used at checkout. Signed in customers can also view orders in My Account.' },
+  { q: 'Which payment methods do you accept?', a: 'Pay securely by card or Mobile Money through Paystack.' },
+  { q: 'How can I contact the team?', a: 'Reach us through WhatsApp, by phone, or by email from the Contact page.' },
 ];
 
 export default function FAQ() {
@@ -20,7 +21,8 @@ export default function FAQ() {
       <div className="faq-list">
         {faqs.map((f) => (
          <details key={f.q} id={f.id} open={f.id === activeId ? true : undefined} className="faq-item">
-            <p>{f.a}</p>
+          <summary>{f.q}</summary>
+            <p>{f.a} {f.policyLink && <Link to="/refund-policy">Read the full Refund &amp; Return Policy.</Link>}</p>
           </details>
         ))}
       </div>

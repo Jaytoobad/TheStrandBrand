@@ -5,3 +5,8 @@ dist
 *.log
 .DS_Store
 supabase/.temp
+
+# Local AI-assistant skill files (not part of the site)
+.agents/
+.claude/
+skills-lock.json

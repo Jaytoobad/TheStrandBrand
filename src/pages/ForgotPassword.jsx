@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { requestPasswordReset } from '../services/auth';
 import { useToast } from '../context/ToastContext';
+import usePageMeta from '../hooks/usePageMeta';
 
 export default function ForgotPassword() {
+  usePageMeta('Reset Password', 'Request a secure password reset link for your account.');
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);

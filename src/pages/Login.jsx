@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { signIn } from '../services/auth';
 import { useToast } from '../context/ToastContext';
  import usePageMeta from '../hooks/usePageMeta';
-import posthog, { isPostHogConfigured } from '../lib/posthog';
+import posthog, { canCapturePostHog } from '../lib/posthog';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -43,13 +43,13 @@ export default function Login() {
     setLoading(true);
     try {
       const { user } = await signIn({ email, password });
-      if (isPostHogConfigured) {
-        posthog.identify(user.id, { email: user.email });
+      if (canCapturePostHog()) {
+        posthog.identify(user.id);
         posthog.capture('user_logged_in', { method: 'password' });
       }
       navigate(location.state?.from?.pathname || '/account');
     } catch (err) {
-      if (isPostHogConfigured) posthog.captureException(err);
+      if (canCapturePostHog()) posthog.captureException(err);
       showToast(friendlyAuthError(err), 'error');
     } finally {
       setLoading(false);

@@ -23,7 +23,7 @@ export default function AdminProductForm() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: '', description: '', category_id: '', price: '', sale_price: '', stock: 0,
-    is_new_arrival: false, is_featured: false, is_active: true,
+    allow_preorder: true, is_new_arrival: false, is_featured: false, is_active: true,
   });
   const [images, setImages] = useState([]); // [{ url, is_primary, sort_order }]
   const [variants, setVariants] = useState([]); // [{ option_name, option_value, price_adjustment, stock }]
@@ -36,6 +36,7 @@ export default function AdminProductForm() {
         setForm({
           name: p.name, description: p.description || '', category_id: p.category_id || '',
           price: p.price, sale_price: p.sale_price || '', stock: p.stock,
+          allow_preorder: p.allow_preorder ?? true,
           is_new_arrival: p.is_new_arrival, is_featured: p.is_featured, is_active: p.is_active,
         });
         setImages(p.product_images.map((im) => ({ url: im.url, is_primary: im.is_primary, sort_order: im.sort_order })));
@@ -97,6 +98,7 @@ export default function AdminProductForm() {
         price: Number(form.price),
         sale_price: form.sale_price ? Number(form.sale_price) : null,
         stock: Number(form.stock),
+        allow_preorder: form.allow_preorder,
         is_new_arrival: form.is_new_arrival,
         is_featured: form.is_featured,
         is_active: form.is_active,
@@ -141,6 +143,7 @@ export default function AdminProductForm() {
             <div className="form-group"><label>Sale Price (optional)</label><input type="number" min="0" step="0.01" value={form.sale_price} onChange={(e) => updateField('sale_price', e.target.value)} /></div>
           </div>
           <div className="form-group"><label>Base Stock</label><input type="number" min="0" value={form.stock} onChange={(e) => updateField('stock', e.target.value)} /></div>
+          <label className="checkbox-row"><input type="checkbox" checked={form.allow_preorder} onChange={(e) => updateField('allow_preorder', e.target.checked)} /> Allow preorders when stock is unavailable</label>
           <label className="checkbox-row"><input type="checkbox" checked={form.is_new_arrival} onChange={(e) => updateField('is_new_arrival', e.target.checked)} /> New Arrival</label>
           <label className="checkbox-row"><input type="checkbox" checked={form.is_featured} onChange={(e) => updateField('is_featured', e.target.checked)} /> Featured / Best Seller</label>
           <label className="checkbox-row"><input type="checkbox" checked={form.is_active} onChange={(e) => updateField('is_active', e.target.checked)} /> Active (visible on storefront)</label>

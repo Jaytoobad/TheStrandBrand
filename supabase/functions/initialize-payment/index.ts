@@ -42,14 +42,14 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { items, customer, delivery, userId } = body;
+    const { items, customer, delivery, userId, policyAccepted } = body;
     const posthogDistinctId = req.headers.get('x-posthog-distinct-id');
     const posthogSessionId = req.headers.get('x-posthog-session-id');
     // items: [{ productId, variantId, quantity }]
     // customer: { name, email, phone }
     // delivery: { region, city, area, digitalAddress, directions, fee }
 
-    if (!items?.length || !customer?.email || !delivery?.region) {
+    if (!items?.length || !customer?.email || !delivery?.region || policyAccepted !== true) {
       return json({ error: 'Missing required checkout information.' }, 400);
     }
 
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
     for (const item of items) {
       const { data: product, error } = await supabase
         .from('products')
-        .select('id, name, price, sale_price, stock, is_active')
+        .select('id, name, price, sale_price, stock, is_active, allow_preorder')
         .eq('id', item.productId)
         .single();
 
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         variantSummary = `${variant.option_name}: ${variant.option_value}`;
       }
 
-      if (item.quantity < 1 || item.quantity > availableStock) {
+      if (item.quantity < 1 || (!product.allow_preorder && item.quantity > availableStock)) {
         return json({ error: `Not enough stock for ${product.name}.` }, 400);
       }
 
@@ -126,6 +126,8 @@ Deno.serve(async (req) => {
         delivery_area: delivery.area ?? null,
         delivery_digital_address: delivery.digitalAddress ?? null,
         delivery_directions: delivery.directions ?? null,
+        refund_policy_accepted_at: new Date().toISOString(),
+        refund_policy_version: '2026-09-28',
       })
       .select()
       .single();
@@ -136,6 +138,7 @@ Deno.serve(async (req) => {
       lineItems.map((li) => ({
         order_id: order.id,
         product_id: li.product_id,
+        variant_id: li.variant_id,
         product_name: li.product_name,
         variant_summary: li.variant_summary,
         unit_price: li.unit_price,
@@ -188,13 +191,15 @@ Deno.serve(async (req) => {
       .update({ payment_reference: paystackData.data.reference })
       .eq('id', order.id);
 
-    await captureServerEvent(posthogDistinctId ?? userId ?? `order:${order.id}`, 'payment_initialized', {
-      order_id: order.id,
-      order_total: total,
-      item_count: lineItems.reduce((sum, item) => sum + item.quantity, 0),
-      currency: 'GHS',
-      ...(posthogSessionId ? { $session_id: posthogSessionId } : {}),
-    });
+    if (posthogDistinctId) {
+      await captureServerEvent(posthogDistinctId, 'payment_initialized', {
+        order_id: order.id,
+        order_total: total,
+        item_count: lineItems.reduce((sum, item) => sum + item.quantity, 0),
+        currency: 'GHS',
+        ...(posthogSessionId ? { $session_id: posthogSessionId } : {}),
+      });
+    }
 
     return json({
       authorizationUrl: paystackData.data.authorization_url,

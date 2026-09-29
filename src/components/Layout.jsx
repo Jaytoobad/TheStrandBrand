@@ -5,6 +5,7 @@ import PageLoader from './PageLoader';
 import Footer from './Footer';
 import WhatsAppButton from './WhatsAppButton';
 import ScrollToHash from './ScrollToHash';
+import CookieConsent from './CookieConsent';
 
 export default function Layout() {
   return (
@@ -19,6 +20,7 @@ export default function Layout() {
       </main>
       <Footer />
       <WhatsAppButton />
+      <CookieConsent />
     </>
   );
 }

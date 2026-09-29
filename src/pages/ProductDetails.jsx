@@ -2,8 +2,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchProductBySlug, fetchApprovedReviews } from '../services/products';
 import { formatCategoryName, formatMoney } from '../config/siteConfig';
-import posthog, { isPostHogConfigured } from '../lib/posthog';
+import posthog, { canCapturePostHog } from '../lib/posthog';
 import { useCart } from '../context/CartContext';
+import DeliveryEstimate from '../components/DeliveryEstimate';
 import { useToast } from '../context/ToastContext';
 import PageLoader from '../components/PageLoader';
  import usePageMeta from '../hooks/usePageMeta';
@@ -71,7 +72,7 @@ export default function ProductDetails() {
   const finalPrice = basePrice + (selectedVariant ? Number(selectedVariant.price_adjustment) : 0);
   const requiresVariant = Object.keys(optionGroups).length > 0;
   const stock = selectedVariant ? selectedVariant.stock : product.stock;
-  const outOfStock = stock <= 0;
+  const outOfStock = stock <= 0 && !product.allow_preorder;
 
   function handleAddToCart() {
     if (requiresVariant && !selectedVariant) {
@@ -79,7 +80,7 @@ export default function ProductDetails() {
       return;
     }
     addItem(product, selectedVariant, quantity);
-    if (isPostHogConfigured) {
+    if (canCapturePostHog()) {
       posthog.capture('product_added_to_cart', {
         product_id: product.id,
         category: product.categories?.name,
@@ -131,6 +132,8 @@ export default function ProductDetails() {
           <span className="price-current">{formatMoney(finalPrice)}</span>
         </div>
 
+        <DeliveryEstimate />
+
         {product.description && <p className="product-description">{product.description}</p>}
 
         {Object.entries(optionGroups).map(([name, options]) => (
@@ -142,7 +145,7 @@ export default function ProductDetails() {
                   key={opt.id}
                   className={selectedOptions[name] === opt.option_value ? 'option-pill active' : 'option-pill'}
                   onClick={() => setSelectedOptions((s) => ({ ...s, [name]: opt.option_value }))}
-                  disabled={opt.stock <= 0}
+                  disabled={opt.stock <= 0 && !product.allow_preorder}
                   aria-pressed={selectedOptions[name] === opt.option_value}
                 >
                   {opt.option_value}
@@ -159,7 +162,7 @@ export default function ProductDetails() {
             <button onClick={() => setQuantity((q) => Math.min(stock || 99, q + 1))} aria-label="Increase quantity">+</button>
           </div>
           <span className={outOfStock ? 'stock-status stock-out' : 'stock-status'}>
-            {outOfStock ? 'Out of stock' : `${stock} in stock`}
+            {outOfStock ? 'Out of stock' : product.allow_preorder ? 'Available to preorder' : `${stock} in stock`}
           </span>
         </div>
 

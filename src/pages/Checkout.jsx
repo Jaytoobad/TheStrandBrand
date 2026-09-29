@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatMoney, siteConfig } from '../config/siteConfig';
 import usePageMeta from '../hooks/usePageMeta';
 import { initializePayment } from '../services/orders';
-import posthog, { isPostHogConfigured } from '../lib/posthog';
+import posthog, { canCapturePostHog } from '../lib/posthog';
+import DeliveryEstimate from '../components/DeliveryEstimate';
 
 const GHANA_REGIONS = [
   'Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern', 'Volta',
@@ -25,6 +26,7 @@ export default function Checkout() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
   const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
     name: profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : '',
@@ -75,6 +77,9 @@ export default function Checkout() {
     if (!form.city.trim()) {
       next.city = 'City / Town is required.';
     }
+    if (!policyAccepted) {
+      next.policyAccepted = 'Please confirm that you have read the Refund & Return Policy.';
+    }
     if (form.digitalAddress.trim() && !DIGITAL_ADDRESS_PATTERN.test(form.digitalAddress.trim())) {
       next.digitalAddress = 'Format should look like GA-183-9297.';
     }
@@ -91,9 +96,10 @@ export default function Checkout() {
       firstErrorField?.focus();
       return;
     }
+    setErrors({});
 
     setSubmitting(true);
-    if (isPostHogConfigured) {
+    if (canCapturePostHog()) {
       posthog.capture('checkout_started', {
         item_count: items.reduce((sum, item) => sum + item.quantity, 0),
         order_total: total,
@@ -104,6 +110,7 @@ export default function Checkout() {
     try {
       const payload = {
         userId: user?.id ?? null,
+        policyAccepted,
         customer: { name: form.name, email: form.email, phone: form.phone },
         delivery: {
           region: form.region,
@@ -123,7 +130,7 @@ export default function Checkout() {
       clearCart();
       window.location.href = result.authorizationUrl;
     } catch (err) {
-      if (isPostHogConfigured) {
+      if (canCapturePostHog()) {
         posthog.capture('checkout_start_failed', {
           item_count: items.reduce((sum, item) => sum + item.quantity, 0),
           authenticated: Boolean(user),
@@ -175,6 +182,7 @@ export default function Checkout() {
               aria-invalid={Boolean(errors.phone)}
               aria-describedby={errors.phone ? 'checkout-phone-error' : undefined}
             />
+            <p className="form-hint">We will email your order confirmation and send order updates by SMS to these details.</p>
             {errors.phone && <p id="checkout-phone-error" className="form-error" role="alert">{errors.phone}</p>}
           </div>
         </div>
@@ -228,6 +236,14 @@ export default function Checkout() {
           <textarea id="checkout-directions" rows={3} value={form.directions} onChange={(e) => update('directions', e.target.value)} />
         </div>
 
+        <div className="form-group">
+          <div className="checkout-policy-acknowledgement">
+            <input id="checkout-policy-accepted" type="checkbox" checked={policyAccepted} onChange={(e) => { setPolicyAccepted(e.target.checked); if (e.target.checked && errors.policyAccepted) setErrors((previous) => ({ ...previous, policyAccepted: undefined })); }} aria-invalid={Boolean(errors.policyAccepted)} aria-describedby={errors.policyAccepted ? 'checkout-policy-error' : undefined} />
+            <p><label htmlFor="checkout-policy-accepted">I have read and agree to the </label><Link to="/refund-policy" target="_blank">Refund &amp; Return Policy</Link>.</p>
+          </div>
+          {errors.policyAccepted && <p id="checkout-policy-error" className="form-error" role="alert">{errors.policyAccepted}</p>}
+        </div>
+
         <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
           {submitting ? 'Starting payment…' : `Pay ${formatMoney(total)} with Paystack`}
         </button>
@@ -235,6 +251,7 @@ export default function Checkout() {
 
       <aside className="cart-summary card">
         <h2>Order Summary</h2>
+        <DeliveryEstimate compact />
         {items.map((i) => (
           <div key={i.key} className="summary-row">
             <span>{i.name} {i.variantLabel && `(${i.variantLabel})`} × {i.quantity}</span>

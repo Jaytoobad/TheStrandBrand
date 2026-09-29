@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { verifyPayment } from '../services/orders';
 import PageLoader from '../components/PageLoader';
+import DeliveryEstimate from '../components/DeliveryEstimate';
 
 // Paystack redirects here with ?reference=xxxx after the customer pays.
 // We verify server-side (never trust the redirect itself) before showing
@@ -37,7 +38,9 @@ export default function OrderConfirmation() {
       <div className="confirmation-icon">✓</div>
       <h1>Order Confirmed</h1>
       <p className="order-number">Order Number: <strong>{orderNumber}</strong></p>
-      <p>Thank you for your order! We've received your payment and your wig is being prepared for dispatch. A confirmation has been sent to your email.</p>
+      <p>Thank you for your order. Your payment is confirmed, and we are preparing your custom wig.</p>
+      <DeliveryEstimate compact />
+      <p>You confirmed the Refund &amp; Return Policy at checkout.</p>
       <div className="confirmation-actions">
         <Link to={`/track-order?order=${orderNumber}`} className="btn btn-primary">Track Order</Link>
         <Link to="/shop" className="btn btn-outline">Continue Shopping</Link>

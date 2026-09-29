@@ -13,7 +13,7 @@ export default function ProductCard({ product, isWishlisted = false }) {
 
   const image = product.product_images?.find((i) => i.is_primary)?.url || product.product_images?.[0]?.url || '/assets/placeholder-product.jpg';
   const onSale = product.sale_price != null && product.sale_price < product.price;
-  const outOfStock = product.stock <= 0;
+  const outOfStock = product.stock <= 0 && !product.allow_preorder;
 
   async function toggleWishlist(e) {
     e.preventDefault();
@@ -37,6 +37,7 @@ export default function ProductCard({ product, isWishlisted = false }) {
         <div className="product-card-badges">
           {onSale && <span className="badge badge-sale">Sale</span>}
           {product.is_new_arrival && <span className="badge badge-new">New</span>}
+          {product.allow_preorder && <span className="badge badge-preorder">Made to order</span>}
           {outOfStock && <span className="badge badge-out">Out of stock</span>}
         </div>
         <button

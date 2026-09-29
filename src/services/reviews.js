@@ -13,3 +13,13 @@ export async function submitReview({ productId, orderId, rating, comment, userId
   });
   if (error) throw error;
 }
+
+export async function fetchReviewedProductIds(orderId, userId) {
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('product_id')
+    .eq('order_id', orderId)
+    .eq('user_id', userId);
+  if (error) throw error;
+  return data.map((review) => review.product_id);
+}

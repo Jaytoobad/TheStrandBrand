@@ -98,6 +98,7 @@ Copy `.env.example` to `.env` and fill in:
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-public-key
 VITE_PAYSTACK_PUBLIC_KEY=pk_test_xxxx
+VITE_PUBLIC_SITE_URL=https://your-canonical-store-domain.example
 ```
 
 These three are safe to expose in the frontend build — they're public
@@ -127,12 +128,10 @@ services built around it:
 2. Once created, go to **Project Settings → API**. Copy the **Project URL**
    and the **anon / public key** into your `.env` as `VITE_SUPABASE_URL` and
    `VITE_SUPABASE_PUBLISHABLE_KEY`.
-3. Go to **SQL Editor**, paste the entire contents of
-   `supabase/migrations/0001_init.sql`, and run it. This creates every table,
-   the RLS policies, and a couple of demo categories/products.
-   - Alternatively, with the [Supabase CLI](https://supabase.com/docs/guides/cli)
-     installed: `supabase link --project-ref your-project-ref` then
-     `supabase db push`.
+3. Apply all files in `supabase/migrations/` in numeric order. They create the
+   initial schema and the preorder, review, and policy-acceptance updates.
+   With the [Supabase CLI](https://supabase.com/docs/guides/cli), run
+   `supabase link --project-ref your-project-ref` then `supabase db push`.
 
 ## 9. Storage Setup (product images)
 
@@ -158,8 +157,11 @@ Supabase Auth is enabled by default. Two things worth checking:
   on so new customers must verify their email before logging in (this is
   what powers the "check your email" screen after registration).
 - **Project Settings → Auth → URL Configuration** — set your **Site URL**
-  (e.g. your Vercel deployment URL) and add it to **Redirect URLs**, so
-  password-reset links and email confirmations point to the right place.
+   to the canonical customer-facing domain, not a Vercel preview URL. Add
+   `https://your-domain.example/reset-password` to **Redirect URLs**. Set
+   `VITE_PUBLIC_SITE_URL` to the same canonical origin in Vercel and in local
+   `.env`. Development falls back to `localhost`; production intentionally
+   refuses to send reset links if this value is missing.
 
 ## 11. Edge Functions
 
@@ -170,6 +172,10 @@ There are three:
 | `initialize-payment` | Re-prices the cart from the database (never trusts the browser), creates the order as `pending_payment`, and asks Paystack to start a transaction. |
 | `verify-payment` | Called by the frontend right after Paystack redirects back. Verifies the transaction directly with Paystack, then marks the order paid and safely decrements stock. Idempotent — safe to call twice. |
 | `paystack-webhook` | Called directly by Paystack's servers (not the browser) when a payment's status changes. This is the *reliable* path, since a customer can close their browser before the redirect fires. Verifies Paystack's HMAC signature before trusting anything. |
+
+After a payment is first confirmed, `verify-payment` sends an order confirmation
+email through Resend and an SMS through Twilio. The handlers are idempotent so
+the webhook and redirect verification do not send duplicate confirmations.
 
 Deploy with the [Supabase CLI](https://supabase.com/docs/guides/cli):
 
@@ -191,7 +197,18 @@ These are **server-side only** — never put them in `.env` or any frontend file
 
 ```bash
 supabase secrets set PAYSTACK_SECRET_KEY=sk_test_xxxxxxxxxxxx
+supabase secrets set RESEND_API_KEY=re_xxxxxxxxxxxx
+supabase secrets set ORDER_NOTIFICATION_FROM_EMAIL="TheStrandBrand <orders@your-verified-domain.example>"
+supabase secrets set TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+supabase secrets set TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+supabase secrets set TWILIO_FROM_NUMBER=+15005550006
+supabase secrets set PUBLIC_SITE_URL=https://your-domain.example
 ```
+
+Verify the sender domain and sender address in Resend before testing email.
+Twilio must have SMS enabled for the account and a sender number approved for
+delivery to Ghana. Replace all example values above with real credentials; set
+secrets directly in the terminal and never send them through chat.
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided automatically to
 Edge Functions by Supabase — you don't need to set these yourself.
@@ -269,9 +286,14 @@ product appears on the shop immediately — no redeploy needed.
    logic — whichever arrives first "wins"; the second call is a no-op thanks
    to the idempotency check. This means an order still gets fulfilled even if
    the customer closes their browser right after paying.
-6. From there, the admin updates `status` (processing → packaged →
+6. Once payment is confirmed, the customer receives an email and SMS with
+   their order number and preorder timing, if the provider secrets are set.
+7. From there, the admin updates `status` (processing → packaged →
    dispatched → …) from the Orders section, and each change is logged to
    `order_status_history`, which powers the customer-facing tracking timeline.
+
+Customers with an account can submit one review per product after its order
+is marked delivered. Reviews remain pending until approved in Admin → Reviews.
 
 ## 19. Development Mode
 
@@ -286,10 +308,17 @@ Runs Vite's dev server with hot reload at `http://localhost:5173`.
 1. Push this repository to GitHub/GitLab/Bitbucket.
 2. In Vercel, **Import Project** and select the repo. Vercel auto-detects
    Vite (build command `npm run build`, output directory `dist`).
-3. Add the three `VITE_...` environment variables from Section 6 in Vercel's
+3. Add the `VITE_...` environment variables from Section 6 in Vercel's
    Project Settings → Environment Variables.
-4. Deploy. Update your Supabase Auth **Site URL**/**Redirect URLs**
-   (Section 10) to match your new Vercel domain.
+4. Set `VITE_PUBLIC_SITE_URL` to the canonical custom domain, then deploy.
+   Configure the same origin in Supabase Auth **Site URL** and add the reset
+   route to **Redirect URLs** (Section 10).
+5. Configure the Edge Function notification secrets from Section 12, deploy
+   `verify-payment`, `initialize-payment`, and `paystack-webhook`, then test a
+   Paystack test payment and confirm one email and one SMS are delivered.
+6. Apply database migrations `0002` through `0005`; customer preorder,
+   checkout policy acknowledgement, and review access depend on these columns
+   and policies.
 
 ## 21. Troubleshooting
 
@@ -340,51 +369,44 @@ and redeploy to update it everywhere:
 Supabase and Paystack credentials go in `.env` (frontend keys) and Supabase
 Edge Function secrets (server-side keys) — see Sections 6 and 12 above.
 
-The "Meet the CEO" section and legal pages (Privacy Policy, Terms) contain
-clearly-marked placeholder text in `src/pages/About.jsx`,
-`src/pages/PrivacyPolicy.jsx`, and `src/pages/Terms.jsx` — replace these
-before launch, and have the legal pages reviewed by a qualified professional.
+The privacy, cookie, terms, and refund policies describe the current app
+behavior and owner-provided rules. Have them reviewed by a Ghana-qualified
+professional before launch. Confirm the real support email and Instagram
+account before publishing.
 
 ---
 
 ## Final Checklist
 
 ### Files Created
-- Full React/Vite app under `src/` (components, pages, admin, context,
-  services, config, lib, styles)
-- `supabase/migrations/0001_init.sql` — schema + RLS + seed data
-- `supabase/functions/initialize-payment/index.ts`
-- `supabase/functions/verify-payment/index.ts`
-- `supabase/functions/paystack-webhook/index.ts`
-- `.env.example`, `.gitignore`, `package.json`, `vite.config.js`,
-  `index.html`, this `README.md`
+This section is retained for the initial project handoff. Current migration
+and deployment requirements are listed below.
 
 ### Supabase Migrations Created
-- `0001_init.sql` (profiles, categories, products, product_images,
-  product_variants, addresses, orders, order_items, order_status_history,
-  payments, wishlists, reviews, notifications, admin_activity, RLS policies,
-  helper functions, seed data)
+- `0001_init.sql` (base schema, RLS policies, helper functions, seed data)
+- `0002_product_preorders.sql` (preorder availability and order variant IDs)
+- `0003_unique_verified_reviews.sql` (one verified review per product/order)
+- `0004_refund_policy_acceptance.sql` (record checkout policy acceptance)
+- `0005_bind_reviews_to_delivered_order.sql` (bind review authorization to the delivered order)
 
 ### Edge Functions Created
 - `initialize-payment`, `verify-payment`, `paystack-webhook`
 
 ### Environment Variables Required
 - Frontend (`.env`): `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`,
-  `VITE_PAYSTACK_PUBLIC_KEY`
-- Edge Function secrets: `PAYSTACK_SECRET_KEY` (`SUPABASE_URL` and
-  `SUPABASE_SERVICE_ROLE_KEY` are provided automatically)
+   `VITE_PAYSTACK_PUBLIC_KEY`, `VITE_PUBLIC_SITE_URL`
+- Edge Function secrets: `PAYSTACK_SECRET_KEY`, `RESEND_API_KEY`,
+   `ORDER_NOTIFICATION_FROM_EMAIL`, `TWILIO_ACCOUNT_SID`,
+   `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`, `PUBLIC_SITE_URL`
 
 ### Manual Setup Steps Remaining
-1. Create the Supabase project and run the migration (Section 8)
-2. Create the `product-images` storage bucket (Section 9)
-3. Deploy the three Edge Functions and set `PAYSTACK_SECRET_KEY` (Sections 11–12)
-4. Create a Paystack account, grab test keys, configure the webhook (Sections 13–14)
-5. Register an account and promote it to admin via SQL (Section 16)
-6. Replace placeholder content in `siteConfig.js`, About, Privacy Policy, and
-   Terms pages
-7. Run `npm install` and `npm run build` locally to confirm a clean production
-   build before deploying (this could not be verified in the environment this
-   project was generated in — see the note below)
+1. Set the real production `VITE_PUBLIC_SITE_URL` in Vercel and match it in Supabase Auth Site URL and Redirect URLs.
+2. Apply migrations `0002_product_preorders.sql` through `0005_bind_reviews_to_delivered_order.sql` in order.
+3. Set Resend and Twilio secrets in Supabase. Verify the sender domain and Ghana SMS delivery with test credentials.
+4. Deploy the updated `initialize-payment`, `verify-payment`, and `paystack-webhook` functions.
+5. Test the full Paystack test flow. Confirm one email/SMS per paid order, correct preorder inventory handling, and no duplicate reviews.
+6. Run `npm run build` before deploying the frontend.
+7. Replace the placeholder contact email and Instagram handle, then have the refund, privacy, cookie, and terms pages reviewed by Ghana-qualified counsel.
 
 ### How to Run the Project
 ```bash

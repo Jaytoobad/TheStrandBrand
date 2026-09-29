@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { siteConfig } from '../config/siteConfig';
+import { COOKIE_SETTINGS_EVENT } from '../lib/cookieConsent';
 
 export default function Footer() {
   return (
@@ -29,7 +30,7 @@ export default function Footer() {
           <Link to="/track-order">Track Order</Link>
           <Link to="/faq">FAQ</Link>
           <Link to="/faq#delivery">Delivery Information</Link>
-          <Link to="/faq#returns">Returns / Refunds</Link>
+          <Link to="/refund-policy">Refund &amp; Return Policy</Link>
         </nav>
 
         <nav aria-label="Company">
@@ -37,7 +38,9 @@ export default function Footer() {
           <Link to="/about">About</Link>
           <Link to="/about#story">Our Story</Link>
           <Link to="/privacy-policy">Privacy Policy</Link>
+          <Link to="/cookie-policy">Cookie Policy</Link>
           <Link to="/terms">Terms &amp; Conditions</Link>
+          <button className="footer-cookie-settings" type="button" onClick={() => window.dispatchEvent(new Event(COOKIE_SETTINGS_EVENT))}>Cookie Settings</button>
         </nav>
       </div>
 

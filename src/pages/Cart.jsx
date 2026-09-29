@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { formatMoney, siteConfig } from '../config/siteConfig';
+import DeliveryEstimate from '../components/DeliveryEstimate';
 import usePageMeta from '../hooks/usePageMeta';
 
 export default function Cart() {
@@ -43,6 +44,7 @@ export default function Cart() {
 
       <aside className="cart-summary card">
         <h2>Order Summary</h2>
+        <DeliveryEstimate compact />
         <div className="summary-row"><span>Subtotal</span><span>{formatMoney(subtotal)}</span></div>
         <div className="summary-row"><span>Delivery Fee</span><span>{formatMoney(deliveryFee)}</span></div>
         <div className="summary-row summary-total"><span>Total</span><span>{formatMoney(total)}</span></div>

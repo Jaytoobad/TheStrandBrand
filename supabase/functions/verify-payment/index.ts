@@ -12,6 +12,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { captureServerEvent } from '../_shared/posthog.ts';
+import { sendOrderNotifications } from '../_shared/order-notifications.ts';
 
 const PAYSTACK_SECRET_KEY = Deno.env.get('PAYSTACK_SECRET_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -58,20 +59,22 @@ export async function verifyAndFulfil(reference: string) {
     headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
   });
   const verifyData = await verifyRes.json();
-  const posthogDistinctId = verifyData.data?.metadata?.posthog_distinct_id ?? payment.orders.user_id ?? `order:${payment.order_id}`;
+  const posthogDistinctId = verifyData.data?.metadata?.posthog_distinct_id ?? null;
   const posthogSessionId = verifyData.data?.metadata?.posthog_session_id;
   const sessionProperties = posthogSessionId ? { $session_id: posthogSessionId } : {};
 
   if (!verifyData.status || verifyData.data?.status !== 'success') {
     await supabase.from('payments').update({ status: 'failed', paystack_raw: verifyData }).eq('reference', reference);
     await supabase.from('orders').update({ payment_status: 'failed' }).eq('id', payment.order_id);
-    await captureServerEvent(posthogDistinctId, 'payment_failed', {
-      order_id: payment.order_id,
-      order_total: Number(payment.amount),
-      currency: payment.currency,
-      failure_reason: 'provider_status',
-      ...sessionProperties,
-    });
+    if (posthogDistinctId) {
+      await captureServerEvent(posthogDistinctId, 'payment_failed', {
+        order_id: payment.order_id,
+        order_total: Number(payment.amount),
+        currency: payment.currency,
+        failure_reason: 'provider_status',
+        ...sessionProperties,
+      });
+    }
     return { error: 'Payment was not successful.' };
   }
 
@@ -80,13 +83,15 @@ export async function verifyAndFulfil(reference: string) {
   const expectedAmount = Math.round(Number(payment.amount) * 100);
   if (verifyData.data.amount !== expectedAmount) {
     console.error('Amount mismatch on reference', reference);
-    await captureServerEvent(posthogDistinctId, 'payment_failed', {
-      order_id: payment.order_id,
-      order_total: Number(payment.amount),
-      currency: payment.currency,
-      failure_reason: 'amount_mismatch',
-      ...sessionProperties,
-    });
+    if (posthogDistinctId) {
+      await captureServerEvent(posthogDistinctId, 'payment_failed', {
+        order_id: payment.order_id,
+        order_total: Number(payment.amount),
+        currency: payment.currency,
+        failure_reason: 'amount_mismatch',
+        ...sessionProperties,
+      });
+    }
     return { error: 'Payment amount could not be verified.' };
   }
 
@@ -95,10 +100,18 @@ export async function verifyAndFulfil(reference: string) {
     .update({ status: 'success', channel: verifyData.data.channel, paystack_raw: verifyData })
     .eq('reference', reference);
 
-  await supabase
+  const { data: paidOrder, error: orderUpdateError } = await supabase
     .from('orders')
     .update({ payment_status: 'paid', status: 'paid' })
-    .eq('id', payment.order_id);
+    .eq('id', payment.order_id)
+    .neq('payment_status', 'paid')
+    .select()
+    .maybeSingle();
+
+  if (orderUpdateError) throw orderUpdateError;
+  if (!paidOrder) {
+    return { orderNumber: payment.orders.order_number, status: 'paid', alreadyProcessed: true };
+  }
 
   await supabase.from('order_status_history').insert({
     order_id: payment.order_id,
@@ -110,14 +123,15 @@ export async function verifyAndFulfil(reference: string) {
   // concurrent orders can't push stock negative).
   const { data: items } = await supabase
     .from('order_items')
-    .select('product_id, quantity, variant_summary')
+    .select('product_id, variant_id, product_name, variant_summary, quantity, subtotal, products(allow_preorder)')
     .eq('order_id', payment.order_id);
 
   for (const item of items ?? []) {
+    if (item.products?.allow_preorder || !item.product_id) continue;
     try {
       await supabase.rpc('decrement_stock', {
         p_product_id: item.product_id,
-        p_variant_id: null, // variant_id isn't stored on order_items in this schema; extend if you split variant stock separately
+        p_variant_id: item.variant_id,
         p_qty: item.quantity,
       });
     } catch (e) {
@@ -125,20 +139,24 @@ export async function verifyAndFulfil(reference: string) {
     }
   }
 
+  await sendOrderNotifications(paidOrder, items ?? []);
+
   await supabase.from('notifications').insert({
     user_id: payment.orders.user_id,
     title: 'Payment successful',
     body: `Your order ${payment.orders.order_number} has been confirmed and is being processed.`,
   }).select(); // no-op if user_id is null (guest order) — insert will simply be skipped by RLS/constraint in that case
 
-  await captureServerEvent(posthogDistinctId, 'payment_succeeded', {
-    order_id: payment.order_id,
-    order_total: Number(payment.amount),
-    item_count: (items ?? []).reduce((sum, item) => sum + item.quantity, 0),
-    currency: payment.currency,
-    payment_channel: verifyData.data.channel,
-    ...sessionProperties,
-  });
+  if (posthogDistinctId) {
+    await captureServerEvent(posthogDistinctId, 'payment_succeeded', {
+      order_id: payment.order_id,
+      order_total: Number(payment.amount),
+      item_count: (items ?? []).reduce((sum, item) => sum + item.quantity, 0),
+      currency: payment.currency,
+      payment_channel: verifyData.data.channel,
+      ...sessionProperties,
+    });
+  }
 
   return { orderNumber: payment.orders.order_number, status: 'paid' };
 }
