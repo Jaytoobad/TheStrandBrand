@@ -32,14 +32,14 @@ export default function AdminInventory() {
       <p className="admin-page-hint">Type a new number and click away to save.</p>
       <h3 className="admin-table-title">Products</h3>
       <div className="data-table-wrap admin-table-gap">
-        <table className="data-table">
+        <table className="data-table is-stacked">
           <thead><tr><th>Product</th><th>Stock</th><th>Status</th></tr></thead>
           <tbody>
             {data.products.map((p) => (
               <tr key={p.id}>
-                <td>{p.name}</td>
-                <td><input className="stock-input" type="number" min="0" aria-label={`Stock for ${p.name}`} defaultValue={p.stock} key={p.stock} onBlur={(e) => handleProductStock(p, e.target.value)} /></td>
-                <td>{p.stock === 0 ? <span className="admin-pill is-bad">Out of stock</span> : p.stock <= 5 ? <span className="admin-pill is-warn">Low stock</span> : <span className="admin-pill is-good">In stock</span>}</td>
+                <td className="cell-primary">{p.name}</td>
+                <td data-label="Stock"><input className="stock-input" type="number" min="0" inputMode="numeric" aria-label={`Stock for ${p.name}`} defaultValue={p.stock} key={p.stock} onBlur={(e) => handleProductStock(p, e.target.value)} /></td>
+                <td data-label="Status">{p.allow_preorder ? <span className="admin-pill is-neutral">Made to order</span> : p.stock === 0 ? <span className="admin-pill is-bad">Out of stock</span> : p.stock <= 5 ? <span className="admin-pill is-warn">Low stock</span> : <span className="admin-pill is-good">In stock</span>}</td>
               </tr>
             ))}
           </tbody>
@@ -48,14 +48,14 @@ export default function AdminInventory() {
 
       <h3 className="admin-table-title">Variants</h3>
       <div className="data-table-wrap">
-        <table className="data-table">
+        <table className="data-table is-stacked">
           <thead><tr><th>Product</th><th>Option</th><th>Stock</th></tr></thead>
           <tbody>
             {data.variants.map((v) => (
               <tr key={v.id}>
-                <td>{v.products?.name}</td>
-                <td>{v.option_name}: {v.option_value}</td>
-                <td><input className="stock-input" type="number" min="0" aria-label={`Stock for ${v.products?.name} ${v.option_value}`} defaultValue={v.stock} key={v.stock} onBlur={(e) => handleVariantStock(v, e.target.value)} /></td>
+                <td className="cell-primary">{v.products?.name}</td>
+                <td data-label="Option">{v.option_name}: {v.option_value}</td>
+                <td data-label="Stock"><input className="stock-input" type="number" min="0" inputMode="numeric" aria-label={`Stock for ${v.products?.name} ${v.option_value}`} defaultValue={v.stock} key={v.stock} onBlur={(e) => handleVariantStock(v, e.target.value)} /></td>
               </tr>
             ))}
           </tbody>

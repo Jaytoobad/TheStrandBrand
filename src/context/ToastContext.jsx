@@ -7,7 +7,8 @@ export function ToastProvider({ children }) {
 
   const showToast = useCallback((message, type = 'success') => {
     const id = Date.now() + Math.random();
-    setToasts((t) => [...t, { id, message, type }]);
+    // Several parts of a page can fail at once; show the same message only once.
+    setToasts((t) => (t.some((toast) => toast.message === message) ? t : [...t, { id, message, type }]));
     setTimeout(() => setToasts((t) => t.filter((toast) => toast.id !== id)), 3200);
   }, []);
 

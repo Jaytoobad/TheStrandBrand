@@ -16,12 +16,9 @@
 //  request authenticity ourselves via the HMAC signature check below instead.)
 // ============================================================================
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+import { verifyAndFulfil } from '../_shared/fulfil-payment.ts';
 
 const PAYSTACK_SECRET_KEY = Deno.env.get('PAYSTACK_SECRET_KEY')!;
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 Deno.serve(async (req) => {
   try {
@@ -33,7 +30,7 @@ Deno.serve(async (req) => {
     // so nobody can fake a "payment succeeded" webhook.
     const signature = req.headers.get('x-paystack-signature');
     const expectedSignature = await hmacSha512Hex(PAYSTACK_SECRET_KEY, rawBody);
-    if (signature !== expectedSignature) {
+    if (!signature || !timingSafeEqual(signature, expectedSignature)) {
       return new Response('Invalid signature', { status: 401 });
     }
 
@@ -41,10 +38,10 @@ Deno.serve(async (req) => {
 
     if (event.event === 'charge.success') {
       const reference = event.data.reference;
-      // Re-use the exact same verify-and-fulfil logic the redirect flow uses,
+      // Same verify-and-fulfil logic the redirect flow uses (_shared/fulfil-payment.ts),
       // so there is exactly one code path that ever marks an order paid.
-      const { verifyAndFulfil } = await import('../verify-payment/index.ts');
-      await verifyAndFulfil(reference);
+      const result = await verifyAndFulfil(String(reference));
+      if (result.error) console.warn('Webhook charge.success not fulfilled:', reference, result.error);
     }
 
     // Always 200 quickly so Paystack doesn't endlessly retry; log anything unexpected.
@@ -56,6 +53,14 @@ Deno.serve(async (req) => {
     return new Response('received', { status: 200 });
   }
 });
+
+// Compares signatures without leaking how many characters matched.
+function timingSafeEqual(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
 
 async function hmacSha512Hex(key: string, message: string) {
   const enc = new TextEncoder();

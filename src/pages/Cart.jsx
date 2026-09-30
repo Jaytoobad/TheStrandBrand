@@ -50,7 +50,7 @@ export default function Cart() {
         <DeliveryEstimate compact />
         <div className="summary-row"><span>Subtotal</span><span>{formatMoney(subtotal)}</span></div>
         <div className="summary-row"><span>Delivery Fee</span><span>{lowestFee != null ? `From ${formatMoney(lowestFee)}` : 'At checkout'}</span></div>
-        <div className="summary-row summary-total"><span>Subtotal</span><span>{formatMoney(subtotal)}</span></div>
+        <div className="summary-row summary-total"><span>Total before delivery</span><span>{formatMoney(subtotal)}</span></div>
         <p className="form-hint cart-delivery-note">
           {accraFee != null ? `${formatMoney(accraFee)} within Greater Accra. ` : ''}Your delivery fee is added at checkout once you pick your region.
         </p>

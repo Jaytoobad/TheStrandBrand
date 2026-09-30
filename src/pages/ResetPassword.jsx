@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { updatePassword } from '../services/auth';
 import { useToast } from '../context/ToastContext';
 import usePageMeta from '../hooks/usePageMeta';
+import PasswordInput from '../components/PasswordInput';
 
 // Supabase Auth redirects here (with a recovery session already active)
 // after the user clicks the emailed reset link.
@@ -33,8 +34,8 @@ export default function ResetPassword() {
     <div className="container section auth-page">
       <form className="auth-form card" onSubmit={handleSubmit}>
         <h1>Set New Password</h1>
-        <div className="form-group"><label>New Password</label><input required minLength={8} type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-        <div className="form-group"><label>Confirm Password</label><input required minLength={8} type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} /></div>
+        <div className="form-group"><label htmlFor="reset-password">New Password</label><PasswordInput id="reset-password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+        <div className="form-group"><label htmlFor="reset-confirm">Confirm Password</label><PasswordInput id="reset-confirm" required minLength={8} autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} /></div>
         <button className="btn btn-primary btn-block" disabled={loading}>{loading ? 'Updating…' : 'Update Password'}</button>
       </form>
     </div>

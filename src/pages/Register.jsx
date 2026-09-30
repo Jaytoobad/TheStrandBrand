@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import usePageMeta from '../hooks/usePageMeta';
 import { friendlyAuthError } from './Login';
 import posthog, { canCapturePostHog } from '../lib/posthog';
+import PasswordInput from '../components/PasswordInput';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GHANA_PHONE_PATTERN = /^0\d{9}$/;
@@ -142,9 +143,9 @@ export default function Register() {
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="reg-password">Password</label>
-            <input
+            <PasswordInput
               id="reg-password"
-              type="password"
+              autoComplete="new-password"
               value={form.password}
               onChange={(e) => update('password', e.target.value)}
               aria-invalid={Boolean(errors.password)}
@@ -154,9 +155,9 @@ export default function Register() {
           </div>
           <div className="form-group">
             <label htmlFor="reg-confirm">Confirm Password</label>
-            <input
+            <PasswordInput
               id="reg-confirm"
-              type="password"
+              autoComplete="new-password"
               value={form.confirm}
               onChange={(e) => update('confirm', e.target.value)}
               aria-invalid={Boolean(errors.confirm)}

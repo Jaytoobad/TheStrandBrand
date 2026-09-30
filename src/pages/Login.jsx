@@ -4,6 +4,7 @@ import { signIn } from '../services/auth';
 import { useToast } from '../context/ToastContext';
  import usePageMeta from '../hooks/usePageMeta';
 import posthog, { canCapturePostHog } from '../lib/posthog';
+import PasswordInput from '../components/PasswordInput';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -17,14 +18,14 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  function validate() {
+  function validate(emailValue, passwordValue) {
     const next = {};
-    if (!email.trim()) {
+    if (!emailValue) {
       next.email = 'Email is required.';
-    } else if (!EMAIL_PATTERN.test(email.trim())) {
+    } else if (!EMAIL_PATTERN.test(emailValue)) {
       next.email = 'Please enter a valid email address.';
     }
-    if (!password) {
+    if (!passwordValue) {
       next.password = 'Password is required.';
     }
     return next;
@@ -32,7 +33,12 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const validationErrors = validate();
+    // Browser-saved passwords can fill the fields without telling React, so
+    // read what's actually in the form.
+    const form = new FormData(e.currentTarget);
+    const emailValue = String(form.get('email') || email).trim();
+    const passwordValue = String(form.get('password') || password);
+    const validationErrors = validate(emailValue, passwordValue);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       const firstErrorField = document.querySelector('[aria-invalid="true"]');
@@ -42,7 +48,7 @@ export default function Login() {
     setErrors({});
     setLoading(true);
     try {
-      const { user } = await signIn({ email, password });
+      const { user } = await signIn({ email: emailValue, password: passwordValue });
       if (canCapturePostHog()) {
         posthog.identify(user.id);
         posthog.capture('user_logged_in', { method: 'password' });
@@ -64,7 +70,9 @@ export default function Login() {
           <label htmlFor="login-email">Email</label>
           <input
             id="login-email"
+            name="email"
             type="email"
+            autoComplete="username"
             value={email}
             onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
             aria-invalid={Boolean(errors.email)}
@@ -74,9 +82,10 @@ export default function Login() {
         </div>
         <div className="form-group">
           <label htmlFor="login-password">Password</label>
-          <input
+          <PasswordInput
             id="login-password"
-            type="password"
+            name="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
             aria-invalid={Boolean(errors.password)}
@@ -99,5 +108,7 @@ export function friendlyAuthError(err) {
   if (msg.includes('Invalid login credentials')) return 'Incorrect email or password.';
   if (msg.includes('Email not confirmed')) return 'Please verify your email before logging in.';
   if (msg.includes('already registered')) return 'An account with this email already exists.';
+  if (err?.status === 429 || /rate limit|too many/i.test(msg)) return 'Too many attempts. Please wait a few minutes and try again.';
+  if (/fetch|network/i.test(msg)) return 'Could not reach the server. Check your internet connection and try again.';
   return 'Something went wrong. Please try again.';
 }

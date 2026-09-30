@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
+import { fetchCartPrices } from '../services/products';
 
 // Guest carts persist in localStorage (a per-browser convenience, not
 // sensitive data). For a logged-in customer this still works the same way;
@@ -25,6 +26,36 @@ export function CartProvider({ children }) {
   useEffect(() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch { /* storage unavailable, ignore */ }
   }, [items]);
+
+  // Re-check prices whenever a new product enters the cart (and on first load),
+  // and drop products that are no longer sold. Keeps the cart and checkout
+  // total equal to what Paystack will actually charge.
+  const productIdsKey = useMemo(() => [...new Set(items.map((i) => i.productId))].sort().join(','), [items]);
+  useEffect(() => {
+    if (!productIdsKey) return undefined;
+    let active = true;
+    fetchCartPrices(productIdsKey.split(','))
+      .then((rows) => {
+        if (!active) return;
+        const byId = new Map(rows.map((p) => [p.id, p]));
+        setItems((prev) => {
+          let changed = false;
+          const next = prev.flatMap((item) => {
+            const p = byId.get(item.productId);
+            if (!p || !p.is_active) { changed = true; return []; }
+            const variant = item.variantId ? p.product_variants?.find((v) => v.id === item.variantId) : null;
+            if (item.variantId && !variant) { changed = true; return []; }
+            const unitPrice = Number(p.sale_price ?? p.price) + (variant ? Number(variant.price_adjustment || 0) : 0);
+            if (unitPrice === item.unitPrice) return [item];
+            changed = true;
+            return [{ ...item, unitPrice }];
+          });
+          return changed ? next : prev;
+        });
+      })
+      .catch(() => { /* offline or blocked: keep the saved prices, the server re-prices anyway */ });
+    return () => { active = false; };
+  }, [productIdsKey]);
 
   function addItem(product, variant, quantity = 1) {
     setItems((prev) => {

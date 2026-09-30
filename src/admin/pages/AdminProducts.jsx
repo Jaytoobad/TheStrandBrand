@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchAllProducts, setProductActive } from '../../services/admin';
-import { formatMoney } from '../../config/siteConfig';
+import { formatMoney, formatCategoryName } from '../../config/siteConfig';
 import { useToast } from '../../context/ToastContext';
 import PageLoader from '../../components/PageLoader';
 
@@ -35,17 +35,17 @@ export default function AdminProducts() {
       </div>
 
       <div className="data-table-wrap">
-        <table className="data-table">
+        <table className="data-table is-stacked">
           <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
             {products.map((p) => (
               <tr key={p.id}>
-                <td><img src={p.product_images?.[0]?.url || '/assets/placeholder-product.jpg'} alt="" width={40} height={40} style={{ objectFit: 'cover', borderRadius: 6 }} /></td>
-                <td>{p.name}</td>
-                <td>{p.categories?.name || 'Uncategorized'}</td>
-                <td>{formatMoney(p.sale_price ?? p.price)}</td>
-                <td>{p.stock <= 5 ? <span style={{ color: 'var(--color-error)' }}>{p.stock}</span> : p.stock}</td>
-                <td>{p.is_active ? 'Active' : 'Inactive'}</td>
+                <td className="cell-media"><img src={p.product_images?.find((im) => im.is_primary)?.url || p.product_images?.[0]?.url || '/assets/placeholder-product.jpg'} alt="" width={40} height={40} className="admin-thumb" loading="lazy" /></td>
+                <td className="cell-primary">{p.name}</td>
+                <td data-label="Category">{formatCategoryName(p.categories?.name) || 'Uncategorized'}</td>
+                <td data-label="Price">{formatMoney(p.sale_price ?? p.price)}</td>
+                <td data-label="Stock">{p.allow_preorder ? 'Made to order' : p.stock <= 5 ? <span className="text-error">{p.stock}</span> : p.stock}</td>
+                <td data-label="Status"><span className={`admin-pill ${p.is_active ? 'is-good' : 'is-neutral'}`}>{p.is_active ? 'Active' : 'Hidden'}</span></td>
                 <td className="table-actions">
                   <Link to={`/admin/products/${p.id}/edit`} className="btn btn-sm btn-outline">Edit</Link>
                   <button className="btn btn-sm btn-outline" onClick={() => toggleActive(p)}>{p.is_active ? 'Deactivate' : 'Activate'}</button>

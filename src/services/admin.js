@@ -14,7 +14,8 @@ export async function fetchDashboardStats() {
   const [{ count: totalOrders }, { count: pendingOrders }, { count: deliveredOrders }, { count: totalCustomers }, { count: totalProducts }, paidOrders] =
     await Promise.all([
       supabase.from('orders').select('*', { count: 'exact', head: true }),
-      supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['pending_payment', 'paid', 'processing']),
+      // Paid orders the team still has to make and send out (unpaid checkouts are not counted).
+      supabase.from('orders').select('*', { count: 'exact', head: true }).in('status', ['paid', 'processing', 'packaged']),
       supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'delivered'),
       supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'customer'),
       supabase.from('products').select('*', { count: 'exact', head: true }),
@@ -26,9 +27,15 @@ export async function fetchDashboardStats() {
   const todaySales = paidOrders.data?.filter((o) => o.created_at.startsWith(today)).reduce((sum, o) => sum + Number(o.total), 0) || 0;
 
   // head: true returns only the count (data is always null), so read `count`.
-  const { count: lowStockCount } = await supabase.from('products').select('*', { count: 'exact', head: true }).lte('stock', 5);
+  // Made-to-order products don't use stock, so they never count as low stock.
+  const { count: lowStockCount } = await supabase.from('products').select('*', { count: 'exact', head: true })
+    .lte('stock', 5).eq('allow_preorder', false).eq('is_active', true);
 
-  return { totalSales, todaySales, totalOrders, pendingOrders, deliveredOrders, totalCustomers, totalProducts, lowStockCount: lowStockCount ?? 0 };
+  return {
+    totalSales, todaySales, totalOrders, pendingOrders, deliveredOrders, totalCustomers, totalProducts,
+    paidOrderCount: paidOrders.data?.length || 0,
+    lowStockCount: lowStockCount ?? 0,
+  };
 }
 
 export async function fetchRecentOrders(limit = 8) {
@@ -176,7 +183,8 @@ export async function fetchAllCustomers() {
   const { data: customers, error } = await supabase.from('profiles').select('*').eq('role', 'customer').order('created_at', { ascending: false });
   if (error) throw error;
 
-  const { data: orders } = await supabase.from('orders').select('user_id, total').not('user_id', 'is', null);
+  // Only paid orders count towards "Total spent" (abandoned checkouts don't).
+  const { data: orders } = await supabase.from('orders').select('user_id, total').not('user_id', 'is', null).eq('payment_status', 'paid');
   const statsByUser = {};
   (orders || []).forEach((o) => {
     if (!statsByUser[o.user_id]) statsByUser[o.user_id] = { count: 0, total: 0 };
@@ -207,7 +215,7 @@ export async function deleteReview(id) {
 // --- Inventory ---
 export async function fetchInventory() {
   const [{ data: products }, { data: variants }] = await Promise.all([
-    supabase.from('products').select('id, name, stock, is_active').order('name'),
+    supabase.from('products').select('id, name, stock, is_active, allow_preorder').order('name'),
     supabase.from('product_variants').select('id, product_id, option_name, option_value, stock, products(name)').order('option_name'),
   ]);
   return { products: products || [], variants: variants || [] };

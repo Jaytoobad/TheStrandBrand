@@ -28,7 +28,7 @@ export default function AdminDashboard() {
         <div className="admin-stat-card"><span>{formatMoney(stats.totalSales)}</span><label>Total Sales</label></div>
         <div className="admin-stat-card"><span>{formatMoney(stats.todaySales)}</span><label>Today's Sales</label></div>
         <div className="admin-stat-card"><span>{stats.totalOrders}</span><label>Total Orders</label></div>
-        <div className="admin-stat-card"><span>{stats.pendingOrders}</span><label>Pending Orders</label></div>
+        <div className="admin-stat-card"><span>{stats.pendingOrders}</span><label>Paid, to prepare</label></div>
         <div className="admin-stat-card"><span>{stats.deliveredOrders}</span><label>Delivered Orders</label></div>
         <div className="admin-stat-card"><span>{stats.totalCustomers}</span><label>Total Customers</label></div>
         <div className="admin-stat-card"><span>{stats.totalProducts}</span><label>Total Products</label></div>
@@ -40,19 +40,19 @@ export default function AdminDashboard() {
         <Link to="/admin/orders" className="account-inline-link">View all</Link>
       </div>
       <div className="data-table-wrap">
-        <table className="data-table">
+        <table className="data-table is-stacked">
           <thead>
             <tr><th>Order #</th><th>Customer</th><th>Amount</th><th>Payment</th><th>Status</th><th>Date</th></tr>
           </thead>
           <tbody>
             {orders.map((o) => (
               <tr key={o.id}>
-                <td><Link to={`/admin/orders/${o.id}`}>{o.order_number}</Link></td>
-                <td>{o.customer_name}</td>
-                <td>{formatMoney(o.total)}</td>
-                <td><StatusPill status={o.payment_status} /></td>
-                <td><StatusPill status={o.status} /></td>
-                <td>{new Date(o.created_at).toLocaleDateString()}</td>
+                <td className="cell-primary"><Link to={`/admin/orders/${o.id}`}>{o.order_number}</Link></td>
+                <td data-label="Customer">{o.customer_name}</td>
+                <td data-label="Amount">{formatMoney(o.total)}</td>
+                <td data-label="Payment"><StatusPill status={o.payment_status} /></td>
+                <td data-label="Status"><StatusPill status={o.status} /></td>
+                <td data-label="Date">{new Date(o.created_at).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>

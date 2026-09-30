@@ -46,18 +46,18 @@ export default function AdminOrders() {
 
       {loading ? <PageLoader /> : (
         <div className="data-table-wrap">
-          <table className="data-table">
+          <table className="data-table is-stacked">
             <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead>
             <tbody>
               {orders.map((o) => (
                 <tr key={o.id}>
-                  <td><Link to={`/admin/orders/${o.id}`}>{o.order_number}</Link></td>
-                  <td>{o.customer_name}<span className="table-subtext">{o.customer_email}</span></td>
-                  <td>{o.order_items?.length}</td>
-                  <td>{formatMoney(o.total)}</td>
-                  <td><StatusPill status={o.payment_status} /></td>
-                  <td><StatusPill status={o.status} /></td>
-                  <td>{new Date(o.created_at).toLocaleDateString()}</td>
+                  <td className="cell-primary"><Link to={`/admin/orders/${o.id}`}>{o.order_number}</Link></td>
+                  <td data-label="Customer"><span className="cell-value">{o.customer_name}<span className="table-subtext">{o.customer_email}</span></span></td>
+                  <td data-label="Items">{o.order_items?.length}</td>
+                  <td data-label="Total">{formatMoney(o.total)}</td>
+                  <td data-label="Payment"><StatusPill status={o.payment_status} /></td>
+                  <td data-label="Status"><StatusPill status={o.status} /></td>
+                  <td data-label="Date">{new Date(o.created_at).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>

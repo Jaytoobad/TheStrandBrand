@@ -9,9 +9,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Id of the user whose profile has finished loading. Until it matches the
+  // signed-in user, role checks (e.g. admin) wait instead of redirecting.
+  const [profileFor, setProfileFor] = useState(null);
 
   async function loadProfile(u) {
-    if (!u) { setProfile(null); return; }
+    if (!u) { setProfile(null); setProfileFor(null); return; }
     try {
       const p = await fetchProfile(u.id);
       setProfile(p);
@@ -20,6 +23,8 @@ export function AuthProvider({ children }) {
       }
     } catch {
       setProfile(null);
+    } finally {
+      setProfileFor(u.id);
     }
   }
 
@@ -38,9 +43,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const isAdmin = profile?.role === 'admin';
+  const profileLoading = Boolean(user) && profileFor !== user.id;
 
   return (
-    <AuthContext.Provider value={{ user, profile, isAdmin, loading, refreshProfile: () => loadProfile(user) }}>
+    <AuthContext.Provider value={{ user, profile, isAdmin, loading: loading || profileLoading, refreshProfile: () => loadProfile(user) }}>
       {children}
     </AuthContext.Provider>
   );

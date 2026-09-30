@@ -3,6 +3,7 @@ import { fetchAllCategories, saveCategory, setCategoryActive, uploadCategoryImag
 import { useToast } from '../../context/ToastContext';
 import { compressImage } from '../../lib/imageCompression';
 import PageLoader from '../../components/PageLoader';
+import { formatCategoryName } from '../../config/siteConfig';
 
 const empty = { name: '', slug: '', description: '', image_url: '', sort_order: 0, is_active: true };
 
@@ -85,14 +86,14 @@ export default function AdminCategories() {
       </div>
 
       <div className="data-table-wrap">
-        <table className="data-table">
+        <table className="data-table is-stacked">
           <thead><tr><th>Name</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
             {categories.map((c) => (
               <tr key={c.id}>
-                <td>{c.name}</td>
-                <td>{c.description}</td>
-                <td>{c.is_active ? 'Active' : 'Inactive'}</td>
+                <td className="cell-primary">{formatCategoryName(c.name)}</td>
+                <td data-label="Description" className="cell-wide">{c.description || '—'}</td>
+                <td data-label="Status"><span className={`admin-pill ${c.is_active ? 'is-good' : 'is-neutral'}`}>{c.is_active ? 'Active' : 'Hidden'}</span></td>
                 <td className="table-actions">
                   <button className="btn btn-sm btn-outline" onClick={() => setEditing(c)}>Edit</button>
                   <button className="btn btn-sm btn-outline" onClick={() => toggleActive(c)}>{c.is_active ? 'Deactivate' : 'Activate'}</button>
@@ -106,8 +107,8 @@ export default function AdminCategories() {
       {editing && (
         <form className="admin-form" onSubmit={handleSave} style={{ marginTop: 24 }}>
           <h3>{editing.id ? 'Edit Category' : 'New Category'}</h3>
-          <div className="form-group"><label>Name</label><input required value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></div>
-          <div className="form-group"><label>Description</label><textarea rows={2} value={editing.description || ''} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
+          <div className="form-group"><label htmlFor="category-name">Name</label><input id="category-name" required value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></div>
+          <div className="form-group"><label htmlFor="category-description">Description</label><textarea id="category-description" rows={2} value={editing.description || ''} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
 
           <div className="form-group">
             <label htmlFor="category-image-url">Image</label>
@@ -146,7 +147,7 @@ export default function AdminCategories() {
             </p>
           </div>
 
-          <div className="form-group"><label>Sort Order</label><input type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} /></div>
+          <div className="form-group"><label htmlFor="category-sort">Sort Order</label><input id="category-sort" type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} /></div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="button" className="btn btn-outline" onClick={() => setEditing(null)}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={uploading}>Save</button>

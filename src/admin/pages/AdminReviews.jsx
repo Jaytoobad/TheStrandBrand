@@ -31,17 +31,17 @@ export default function AdminReviews() {
     <div>
       <div className="admin-header"><h1>Reviews</h1></div>
       <div className="data-table-wrap">
-        <table className="data-table">
+        <table className="data-table is-stacked">
           <thead><tr><th>Product</th><th>Customer</th><th>Rating</th><th>Comment</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
             {reviews.map((r) => (
               <tr key={r.id}>
-                <td>{r.products?.name}</td>
-                <td>{r.profiles?.first_name} {r.profiles?.last_name}</td>
-                <td aria-label={`${r.rating} out of 5 stars`}>{'★'.repeat(r.rating)}</td>
-                <td style={{ maxWidth: 240 }}>{r.comment}</td>
-                <td>{new Date(r.created_at).toLocaleDateString()}</td>
-                <td>{r.is_hidden ? 'Hidden' : r.is_approved ? 'Approved' : 'Pending'}</td>
+                <td className="cell-primary">{r.products?.name}</td>
+                <td data-label="Customer">{r.profiles?.first_name} {r.profiles?.last_name}</td>
+                <td data-label="Rating" aria-label={`${r.rating} out of 5 stars`}>{'★'.repeat(r.rating)}</td>
+                <td data-label="Comment" className="cell-wide">{r.comment}</td>
+                <td data-label="Date">{new Date(r.created_at).toLocaleDateString()}</td>
+                <td data-label="Status"><span className={`admin-pill ${r.is_hidden ? 'is-neutral' : r.is_approved ? 'is-good' : 'is-warn'}`}>{r.is_hidden ? 'Hidden' : r.is_approved ? 'Approved' : 'Pending'}</span></td>
                 <td className="table-actions">
                   {!r.is_approved && <button className="btn btn-sm btn-outline" onClick={() => handleApprove(r)}>Approve</button>}
                   <button className="btn btn-sm btn-outline" onClick={() => handleHide(r)}>{r.is_hidden ? 'Unhide' : 'Hide'}</button>

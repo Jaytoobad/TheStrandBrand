@@ -14,13 +14,18 @@ export default function AdminAnalytics() {
     setLoading(true);
     Promise.all([fetchDashboardStats(), fetchSalesOverTime(range), fetchAllProducts()])
       .then(([s, sale, p]) => { setStats(s); setSales(sale); setProducts(p); })
+      .catch(() => setStats(null))
       .finally(() => setLoading(false));
   }, [range]);
 
   if (loading) return <PageLoader />;
 
-  const avgOrderValue = stats.totalOrders ? stats.totalSales / stats.totalOrders : 0;
-  const lowStock = products.filter((p) => p.stock <= 5).sort((a, b) => a.stock - b.stock).slice(0, 8);
+  if (!stats) return <p className="empty-state">Could not load analytics. Please refresh the page.</p>;
+
+  // Average over paid orders only; unpaid checkouts would drag it down.
+  const avgOrderValue = stats.paidOrderCount ? stats.totalSales / stats.paidOrderCount : 0;
+  // Made-to-order products don't use stock, so they never show as low stock.
+  const lowStock = products.filter((p) => p.is_active && !p.allow_preorder && p.stock <= 5).sort((a, b) => a.stock - b.stock).slice(0, 8);
   const ordersInRange = sales.length;
 
   return (
@@ -37,7 +42,7 @@ export default function AdminAnalytics() {
 
       <div className="admin-stat-cards">
         <div className="admin-stat-card"><span>{formatMoney(stats.totalSales)}</span><label>Total Revenue</label></div>
-        <div className="admin-stat-card"><span>{stats.totalOrders}</span><label>Total Orders</label></div>
+        <div className="admin-stat-card"><span>{stats.paidOrderCount}</span><label>Paid Orders (all time)</label></div>
         <div className="admin-stat-card"><span>{formatMoney(avgOrderValue)}</span><label>Average Order Value</label></div>
         <div className="admin-stat-card"><span>{stats.totalCustomers}</span><label>Total Customers</label></div>
         <div className="admin-stat-card"><span>{ordersInRange}</span><label>Paid Orders (selected range)</label></div>

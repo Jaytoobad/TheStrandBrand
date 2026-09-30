@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
+import CategoryCarousel from '../components/CategoryCarousel';
 import collectionImage from '../assets/collection-hair.jpg';
 import { fetchCategories, fetchProducts } from '../services/products';
-import { formatCategoryName } from '../config/siteConfig';
 import { useToast } from '../context/ToastContext';
 import usePageMeta from '../hooks/usePageMeta';
 
@@ -63,20 +63,7 @@ export default function Home() {
 
       <section className="section container">
         <h2 className="section-title">Shop By Category</h2>
-        {loading ? (
-          <div className="category-grid">
-            {Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton category-skeleton" />)}
-          </div>
-        ) : (
-          <div className="category-grid">
-            {categories.map((c) => (
-              <Link key={c.id} to={`/shop?category=${c.slug}`} className="category-tile">
-                <img src={c.image_url || '/assets/placeholder-category.jpg'} alt={c.name} referrerPolicy="no-referrer" />
-                <span>{formatCategoryName(c.name)}</span>
-              </Link>
-            ))}
-          </div>
-        )}
+        <CategoryCarousel categories={categories} loading={loading} />
       </section>
 
       {(loading || newArrivals.length > 0) && (
