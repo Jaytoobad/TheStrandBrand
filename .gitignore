@@ -6,6 +6,9 @@ dist
 .DS_Store
 supabase/.temp
 
+# Promo video renders (large files; share the mp4 directly instead)
+brag-output*/
+
 # Local AI-assistant skill files (not part of the site)
 .agents/
 .claude/
