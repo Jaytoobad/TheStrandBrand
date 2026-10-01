@@ -15,7 +15,7 @@ export const siteConfig = {
   // Phone calls: same format
   phoneNumber: '233543022208',
   phoneDisplay: '054 302 2208',
-  contactEmail: 'hello@thestrandbrand.com', // TODO: replace with the real business email
+  contactEmail: 'abigaillartey99@icloud.com',
   instagramUrl: 'https://instagram.com/thestrandbrand', // TODO: replace with the real Instagram handle
   tiktokUrl: 'https://tiktok.com/@the.strandbrand',
   snapchatUrl: 'https://snapchat.com/add/the.strandbrand',

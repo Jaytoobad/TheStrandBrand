@@ -99,7 +99,7 @@ Copy `.env.example` to `.env` and fill in:
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-public-key
 VITE_PAYSTACK_PUBLIC_KEY=pk_test_xxxx
-VITE_PUBLIC_SITE_URL=https://your-canonical-store-domain.example
+VITE_PUBLIC_SITE_URL=https://the-strand-brand.vercel.app
 ```
 
 These three are safe to expose in the frontend build — they're public
@@ -217,7 +217,7 @@ supabase secrets set ORDER_NOTIFICATION_FROM_EMAIL="TheStrandBrand <orders@your-
 supabase secrets set TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 supabase secrets set TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 supabase secrets set TWILIO_FROM_NUMBER=+15005550006
-supabase secrets set PUBLIC_SITE_URL=https://your-domain.example
+supabase secrets set PUBLIC_SITE_URL=https://the-strand-brand.vercel.app
 ```
 
 Verify the sender domain and sender address in Resend before testing email.

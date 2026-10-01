@@ -3,7 +3,7 @@
 Everything that still needs a real value, a decision or a dashboard step.
 Tick items off as you go. **Never paste secret keys into chat or commit them to git.**
 
-Last reviewed: 29 September 2026
+Last reviewed: 1 October 2026
 
 ---
 
@@ -11,13 +11,13 @@ Last reviewed: 29 September 2026
 
 | Done | Item | Current value | Where it shows |
 |---|---|---|---|
-| [ ] | Real business email | `hello@thestrandbrand.com` (placeholder, this inbox probably doesn't exist) | Contact page, Admin → Settings |
+| [x] | Real business email | `abigaillartey99@icloud.com` | Contact page, Admin → Settings |
 | [ ] | Real Instagram link | `https://instagram.com/thestrandbrand` (placeholder) | Footer, Contact page |
 | [ ] | Confirm TikTok link | `https://tiktok.com/@the.strandbrand` | Footer |
 | [ ] | Confirm Snapchat link | `https://snapchat.com/add/the.strandbrand` | Footer |
-| [ ] | Confirm WhatsApp number | `054 198 8028` (`233541988028`) | Floating button, order help, email templates |
-| [ ] | Confirm call number | `054 302 2208` | Contact page |
-| [ ] | Business location or address | Footer only says "Accra, Ghana" | Footer, email templates |
+| [x] | Confirm WhatsApp number | `054 198 8028` (`233541988028`) | Floating button, order help, email templates |
+| [x] | Confirm call number | `054 302 2208` | Contact page |
+| [x] | Business location or address | "Accra, Ghana" confirmed on 1 October 2026 | Footer, email templates |
 
 > If you change the WhatsApp number, also update it in both files in `supabase/templates/` and paste them into Supabase again.
 
@@ -41,14 +41,15 @@ Fees are edited in **Admin → Settings → Delivery fees** (no code change need
 | Done | Item | Notes |
 |---|---|---|
 | [x] | Greater Accra fee | **GH₵35** (confirmed) |
-| [ ] | Fees for the other 15 regions | **Owner to confirm.** Placeholders in the GH₵45–60 range by distance: Central/Eastern/Volta 45 · Ashanti/Western/Oti 50 · Bono/Bono East/Ahafo/Western North 55 · Northern/Savannah/North East/Upper East/Upper West 60. Change them in Admin → Settings |
-| [ ] | Delivery times | Emails and the site say about 7 days to prepare plus 2–3 days to deliver. Confirm this is right |
+| [x] | Decide fees for the other 15 regions | Owner approved the listed GH₵45–60 fees on 1 October 2026 |
+| [x] | Apply and verify fees for the other 15 regions | All 16 live `delivery_rates` rows read back with the approved values on 1 October 2026 |
+| [x] | Delivery times | Owner confirmed 7 days to prepare plus 2–3 days to deliver on 1 October 2026 |
 
 ## 4. Legal pages
 
 | Done | Item | Notes |
 |---|---|---|
-| [ ] | Lawyer review | Refund, Privacy, Cookie and Terms pages should be checked by a Ghana-qualified lawyer |
+| [ ] | Lawyer review | Refund, Privacy, Cookie and Terms pages should be checked by Ghana-qualified counsel, including US-region PostHog analytics and cross-border data processing |
 | [ ] | Registered business name and number | Not shown anywhere yet. Add them to Terms and Privacy once registered |
 | [ ] | Refund policy version | Checkout records version `2026-09-28` (`supabase/functions/initialize-payment/index.ts`). If you change the refund policy, update this date and the "Last updated" line, then redeploy the function |
 
@@ -61,7 +62,16 @@ Fees are edited in **Admin → Settings → Delivery fees** (no code change need
 | [ ] | Order confirmation emails (Resend) | Needs Edge Function secrets `RESEND_API_KEY` and `ORDER_NOTIFICATION_FROM_EMAIL`. Resend needs a verified domain, so this waits until you own one. Until then no order emails are sent (the code skips them safely) |
 | [ ] | Order SMS (Twilio) | Needs `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`. Optional. Without them, SMS is skipped |
 
-## 6. Custom domain (when you buy one)
+## 6. Current site URL and custom domain
+
+Current canonical URL: `https://the-strand-brand.vercel.app` until a custom domain is purchased.
+
+- [x] Local `.env` and `.env.example` use the current Vercel URL
+- [ ] Set Vercel `VITE_PUBLIC_SITE_URL` to `https://the-strand-brand.vercel.app` and redeploy
+- [ ] Supabase Auth → URL Configuration: set Site URL to the Vercel URL and add `https://the-strand-brand.vercel.app/reset-password`
+- [x] Supabase Edge Function secret `PUBLIC_SITE_URL` set to the current Vercel URL on 1 October 2026
+
+### When you buy a custom domain
 
 - [ ] Add the domain in Vercel → Project → Settings → Domains
 - [ ] Vercel env var `VITE_PUBLIC_SITE_URL` → `https://yourdomain`, then redeploy (this also updates the link preview, sitemap and robots.txt)
@@ -83,8 +93,9 @@ Fees are edited in **Admin → Settings → Delivery fees** (no code change need
 
 ## 8. Accounts, analytics and SEO
 
-- [ ] First admin account created (register, then run `update profiles set role = 'admin' where email = '…';` in the Supabase SQL editor)
-- [ ] PostHog: confirm `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN` and `VITE_PUBLIC_POSTHOG_HOST` are set in Vercel (analytics are silently off without them)
+- [x] First admin account exists (one admin profile verified on 1 October 2026)
+- [ ] PostHog: set `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN` and `VITE_PUBLIC_POSTHOG_HOST` in Vercel. The local project uses the US host and analytics are consent-gated; include cross-border processing in counsel's review
+- [x] Supabase Edge Function PostHog settings configured with the existing US project on 1 October 2026
 - [x] `sitemap.xml` and `robots.txt`: built automatically on every deploy (`seo.config.js`), including every active product. New products appear after the next deploy
 - [ ] Google Search Console: add the site, then submit `https://the-strand-brand.vercel.app/sitemap.xml` (use your own domain once you have one)
 - [ ] Google Business Profile (optional)
