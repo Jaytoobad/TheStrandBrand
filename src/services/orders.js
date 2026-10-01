@@ -50,7 +50,31 @@ export async function fetchOrderById(orderId) {
     .eq('id', orderId)
     .single();
   if (error) throw error;
-  return data;
+
+  const productIds = [...new Set((data.order_items || []).map((item) => item.product_id).filter(Boolean))];
+  if (!productIds.length) return data;
+
+  const { data: images, error: imageError } = await supabase
+    .from('product_images')
+    .select('product_id, url, is_primary, sort_order')
+    .in('product_id', productIds)
+    .order('sort_order');
+  if (imageError) return data;
+
+  const imagesByProduct = new Map();
+  for (const image of images || []) {
+    const productImages = imagesByProduct.get(image.product_id) || [];
+    productImages.push(image);
+    imagesByProduct.set(image.product_id, productImages);
+  }
+
+  return {
+    ...data,
+    order_items: data.order_items.map((item) => ({
+      ...item,
+      product_images: imagesByProduct.get(item.product_id) || [],
+    })),
+  };
 }
 
 // Public order tracking: calls the track_order() database function, which
