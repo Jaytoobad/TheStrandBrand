@@ -67,8 +67,8 @@ Fees are edited in **Admin → Settings → Delivery fees** (no code change need
 Current canonical URL: `https://the-strand-brand.vercel.app` until a custom domain is purchased.
 
 - [x] Local `.env` and `.env.example` use the current Vercel URL
-- [ ] Set Vercel `VITE_PUBLIC_SITE_URL` to `https://the-strand-brand.vercel.app` and redeploy
-- [ ] Supabase Auth → URL Configuration: set Site URL to the Vercel URL and add `https://the-strand-brand.vercel.app/reset-password`
+- [x] Vercel `VITE_PUBLIC_SITE_URL` is set to `https://the-strand-brand.vercel.app` for Production; live contact page verified after deployment
+- [x] Supabase Auth Site URL set to `https://the-strand-brand.vercel.app/`; production reset-password URL already allowlisted
 - [x] Supabase Edge Function secret `PUBLIC_SITE_URL` set to the current Vercel URL on 1 October 2026
 
 ### When you buy a custom domain
@@ -94,7 +94,7 @@ Current canonical URL: `https://the-strand-brand.vercel.app` until a custom doma
 ## 8. Accounts, analytics and SEO
 
 - [x] First admin account exists (one admin profile verified on 1 October 2026)
-- [ ] PostHog: set `VITE_PUBLIC_POSTHOG_PROJECT_TOKEN` and `VITE_PUBLIC_POSTHOG_HOST` in Vercel. The local project uses the US host and analytics are consent-gated; include cross-border processing in counsel's review
+- [x] Vercel PostHog token and host are configured for Production. The project uses the US host and analytics are consent-gated; include cross-border processing in counsel's review
 - [x] Supabase Edge Function PostHog settings configured with the existing US project on 1 October 2026
 - [x] `sitemap.xml` and `robots.txt`: built automatically on every deploy (`seo.config.js`), including every active product. New products appear after the next deploy
 - [ ] Google Search Console: add the site, then submit `https://the-strand-brand.vercel.app/sitemap.xml` (use your own domain once you have one)
