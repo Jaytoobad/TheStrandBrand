@@ -57,8 +57,8 @@ Fees are edited in **Admin → Settings → Delivery fees** (no code change need
 
 | Done | Item | Notes |
 |---|---|---|
-| [ ] | Sign-up and password emails (Supabase SMTP) | Set up Brevo SMTP. Steps are in the plan and README |
-| [ ] | Branded email templates | Paste `supabase/templates/confirm-signup.html` and `reset-password.html` into **Supabase → Authentication → Emails → Templates**. Subjects are at the top of each file |
+| [ ] | Sign-up and password emails (Supabase SMTP) | Brevo SMTP is enabled (`smtp-relay.brevo.com:587`); verify the configured sender in Brevo before marking complete |
+| [ ] | Branded email templates | Templates are ready in `supabase/templates/confirm-signup.html` and `reset-password.html`; Supabase's email settings page currently fails to load the project editor |
 | [ ] | Order confirmation emails (Resend) | Needs Edge Function secrets `RESEND_API_KEY` and `ORDER_NOTIFICATION_FROM_EMAIL`. Resend needs a verified domain, so this waits until you own one. Until then no order emails are sent (the code skips them safely) |
 | [ ] | Order SMS (Twilio) | Needs `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`. Optional. Without them, SMS is skipped |
 
