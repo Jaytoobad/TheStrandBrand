@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import { formatCategoryName } from '../config/siteConfig';
 import useScrollRail from '../hooks/useScrollRail';
+import { THUMB_WIDTH, imageFallback, thumbUrl } from '../lib/imageUrl';
+
+const PLACEHOLDER = '/assets/placeholder-category.jpg';
 
 // Swipeable row of category tiles. Phones show one and a half tiles (so it's
 // obvious there's more to swipe); larger screens show three or four with arrow
@@ -38,12 +41,14 @@ export default function CategoryCarousel({ categories, loading }) {
               aria-label={`${formatCategoryName(c.name)}, category ${i + 1} of ${categories.length}`}
             >
               <img
-                src={c.image_url || '/assets/placeholder-category.jpg'}
+                src={thumbUrl(c.image_url) || PLACEHOLDER}
                 alt=""
                 referrerPolicy="no-referrer"
                 loading={i < 4 ? 'eager' : 'lazy'}
                 decoding="async"
-                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/assets/placeholder-category.jpg'; }}
+                width={THUMB_WIDTH}
+                height={Math.round(THUMB_WIDTH * 4 / 3)}
+                onError={imageFallback(c.image_url, PLACEHOLDER)}
               />
               <span className="category-tile-index" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
               <span className="category-tile-body">

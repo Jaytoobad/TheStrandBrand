@@ -2,7 +2,7 @@
 // reasonable max width and re-encodes it as JPEG at good-but-not-perfect
 // quality. A multi-MB phone photo typically shrinks to a few hundred KB,
 // which makes the storefront load much faster — especially on mobile data.
-export function compressImage(file, { maxWidth = 1600, quality = 0.8 } = {}) {
+export function compressImage(file, { maxWidth = 1400, quality = 0.78 } = {}) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const reader = new FileReader();

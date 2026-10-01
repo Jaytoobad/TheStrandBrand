@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { formatCategoryName, formatMoney } from '../config/siteConfig';
+import { THUMB_WIDTH, imageFallback, thumbUrl } from '../lib/imageUrl';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { addToWishlist, removeFromWishlist } from '../services/wishlist';
@@ -33,7 +34,15 @@ export default function ProductCard({ product, isWishlisted = false }) {
   return (
     <Link to={`/product/${product.slug}`} className="product-card">
       <div className="product-card-image">
-        <img src={image} alt={product.name} loading="lazy" />
+        <img
+          src={thumbUrl(image)}
+          alt={product.name}
+          loading="lazy"
+          decoding="async"
+          width={THUMB_WIDTH}
+          height={Math.round(THUMB_WIDTH * 1.25)}
+          onError={imageFallback(image, '/assets/placeholder-product.jpg')}
+        />
         <div className="product-card-badges">
           {onSale && <span className="badge badge-sale">Sale</span>}
           {product.is_new_arrival && <span className="badge badge-new">New</span>}

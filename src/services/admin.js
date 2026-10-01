@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabaseClient';
+import { compressImage } from '../lib/imageCompression';
+import { THUMB_WIDTH, thumbPath } from '../lib/imageUrl';
 
 // Every call in this file relies on Supabase RLS's is_admin() check to
 // actually enforce access — see supabase/migrations/0001_init.sql. If a
@@ -105,13 +107,28 @@ export async function saveProductVariants(productId, variants) {
   }
 }
 
+// File names are unique (timestamped), so browsers can cache them for a year.
+const IMAGE_CACHE_SECONDS = '31536000';
+
+// Uploads the photo plus a small copy for cards/tiles (see src/lib/imageUrl.js).
+// A failed thumbnail doesn't block the upload; the site falls back to the full photo.
+async function uploadImageWithThumb(file, path) {
+  const bucket = supabase.storage.from('product-images');
+  const { error } = await bucket.upload(path, file, { cacheControl: IMAGE_CACHE_SECONDS, upsert: false });
+  if (error) throw error;
+  try {
+    const thumb = await compressImage(file, { maxWidth: THUMB_WIDTH, quality: 0.75 });
+    const { error: thumbError } = await bucket.upload(thumbPath(path), thumb, { cacheControl: IMAGE_CACHE_SECONDS, upsert: false });
+    if (thumbError) throw thumbError;
+  } catch (err) {
+    console.warn('Thumbnail upload failed', err);
+  }
+  return bucket.getPublicUrl(path).data.publicUrl;
+}
+
 export async function uploadProductImage(file, productId) {
   const ext = file.name.split('.').pop();
-  const path = `${productId}/${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from('product-images').upload(path, file, { cacheControl: '3600', upsert: false });
-  if (error) throw error;
-  const { data } = supabase.storage.from('product-images').getPublicUrl(path);
-  return data.publicUrl;
+  return uploadImageWithThumb(file, `${productId}/${Date.now()}.${ext}`);
 }
 
 // --- Categories ---
@@ -135,11 +152,7 @@ export async function saveCategory(category, id) {
 // insert policy), kept in their own folder so they're easy to find.
 export async function uploadCategoryImage(file) {
   const ext = file.name.split('.').pop();
-  const path = `categories/${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from('product-images').upload(path, file, { cacheControl: '3600', upsert: false });
-  if (error) throw error;
-  const { data } = supabase.storage.from('product-images').getPublicUrl(path);
-  return data.publicUrl;
+  return uploadImageWithThumb(file, `categories/${Date.now()}.${ext}`);
 }
 
 export async function setCategoryActive(id, isActive) {

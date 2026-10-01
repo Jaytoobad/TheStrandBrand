@@ -31,8 +31,8 @@ Last reviewed: 29 September 2026
 | [ ] | Product photos | Upload in **Admin → Products** (fallback: `public/assets/placeholder-product.jpg`) |
 | [ ] | Category photos | Upload in **Admin → Categories** (fallback: `public/assets/placeholder-category.jpg`) |
 | [x] | Link-preview image for WhatsApp/Instagram shares | Done: `public/assets/og-image.png` (logo on pink, 1200×630) |
-| [ ] | Unused founder photo | `public/assets/placeholder-ceo.jpg` isn't used anywhere. Delete it, or send a real photo so it can go on the About page |
-| [ ] | Old collection photo | `src/assets/background.jpg.jpg` (3.9 MB) is no longer used. Safe to delete |
+| [x] | Unused founder photo | Removed unused `public/assets/placeholder-ceo.jpg` placeholder |
+| [x] | Old collection photo | `src/assets/background.jpg.jpg` was already absent and is no longer referenced |
 
 ## 3. Delivery and pricing
 

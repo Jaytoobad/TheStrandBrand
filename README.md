@@ -151,6 +151,19 @@ services built around it:
    `src/services/admin.js` uploads here and stores the resulting public URL
    in `product_images.url`.
 
+New uploads also create a 640px thumbnail for storefront cards and category
+tiles. To create thumbnails for existing bucket images, with `VITE_SUPABASE_URL`
+in `.env`, run from PowerShell at the project root:
+
+```powershell
+$env:SUPABASE_SERVICE_ROLE_KEY = '<your-service-role-key>'
+node scripts/make-thumbnails.mjs
+Remove-Item Env:SUPABASE_SERVICE_ROLE_KEY
+```
+
+The script reads the service-role key from the environment only; never commit
+or share it.
+
 ## 10. Authentication Setup
 
 Supabase Auth is enabled by default. Two things worth checking:
@@ -161,8 +174,9 @@ Supabase Auth is enabled by default. Two things worth checking:
    to the canonical customer-facing domain, not a Vercel preview URL. Add
    `https://your-domain.example/reset-password` to **Redirect URLs**. Set
    `VITE_PUBLIC_SITE_URL` to the same canonical origin in Vercel and in local
-   `.env`. Development falls back to `localhost`; production intentionally
-   refuses to send reset links if this value is missing.
+   `.env`. If it is missing, the app warns in production and falls back to the
+   current browser origin, so configure it to ensure reset links use the
+   canonical domain.
 
 ## 11. Edge Functions
 
@@ -216,7 +230,7 @@ Edge Functions by Supabase — you don't need to set these yourself.
 
 ## 13. Paystack Setup
 
-1. Create a account at [paystack.com](https://paystack.com) (Ghana is
+1. Create an account at [paystack.com](https://paystack.com) (Ghana is
    supported).
 2. Go to **Settings → API Keys & Webhooks**. Copy the **Test Public Key**
    into `VITE_PAYSTACK_PUBLIC_KEY` in `.env`, and the **Test Secret Key**
