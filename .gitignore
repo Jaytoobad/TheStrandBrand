@@ -21,4 +21,5 @@ public/assets/*.jpeg
 # Local AI-assistant skill files (not part of the site)
 .agents/
 .claude/
+.kilo/
 skills-lock.json

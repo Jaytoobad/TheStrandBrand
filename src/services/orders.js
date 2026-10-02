@@ -7,6 +7,19 @@ const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 // `orders`/`payments` tables directly — pricing, stock checks and payment
 // verification all happen server-side. See supabase/functions/.
 
+// A gateway or proxy error comes back as an HTML error page, not JSON, so
+// parsing it directly would throw an opaque "Unexpected token '<'" and hide the
+// real problem from both the customer and our logs.
+async function readJson(res) {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 export async function initializePayment(payload) {
   // The Edge Function decides whether an order belongs to an account, so send
   // the session token. It verifies this server-side instead of trusting any id
@@ -22,11 +35,14 @@ export async function initializePayment(payload) {
     },
     body: JSON.stringify(payload),
   });
-  const data = await res.json();
+  const data = await readJson(res);
   if (!res.ok) {
-    const err = new Error(data.error || 'Could not start payment.');
-    err.code = data.code; // e.g. 'delivery_fee_changed'
+    const err = new Error(data?.error || `Could not start payment (error ${res.status}). Please try again.`);
+    err.code = data?.code; // e.g. 'delivery_fee_changed', 'rate_limited'
     throw err;
+  }
+  if (!data || typeof data !== 'object') {
+    throw new Error('Could not start payment. Please try again.');
   }
   return data;
 }
@@ -37,8 +53,8 @@ export async function verifyPayment(reference) {
     headers: { 'Content-Type': 'application/json', ...getPostHogHeaders() },
     body: JSON.stringify({ reference }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Could not verify payment.');
+  const data = await readJson(res);
+  if (!res.ok) throw new Error(data?.error || 'Could not verify payment.');
   return data;
 }
 

@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import { formatMoney } from '../config/siteConfig';
 import usePageMeta from '../hooks/usePageMeta';
 import { initializePayment } from '../services/orders';
+import { isPaystackCheckoutUrl } from '../lib/safeUrl';
 import posthog, { canCapturePostHog } from '../lib/posthog';
 import DeliveryEstimate from '../components/DeliveryEstimate';
 import useDeliveryRates from '../hooks/useDeliveryRates';
@@ -22,6 +23,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { rates, feeByRegion, refresh: refreshRates } = useDeliveryRates();
   const [submitting, setSubmitting] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
@@ -124,11 +126,23 @@ export default function Checkout() {
       // Hand off to Paystack's hosted checkout. The order already exists as
       // 'pending_payment' — it becomes 'paid' only after server-side
       // verification when Paystack redirects back.
+      //
+      // Check the URL before anything irreversible. Assigning a missing URL to
+      // location.href navigates the customer to /undefined instead of Paystack
+      // and empties their basket, so a bad response must fail here with the
+      // cart and the order both left as they are.
+      if (!isPaystackCheckoutUrl(result?.authorizationUrl)) {
+        throw new Error('Could not start payment. Please try again.');
+      }
       sessionStorage.setItem('tsb_pending_order', result.orderNumber);
       // Lets guests land on their tracked order after payment without retyping their email.
       sessionStorage.setItem('tsb_pending_contact', form.email.trim());
       clearCart();
-      window.location.href = result.authorizationUrl;
+      // The order is recorded but unpaid, so the basket is deliberately not
+      // restored if this customer is interrupted at Paystack — it would go on
+      // to pay twice. See src/pages/OrderConfirmation.jsx.
+      setRedirecting(true);
+      window.location.assign(result.authorizationUrl);
     } catch (err) {
       if (canCapturePostHog()) {
         posthog.capture('checkout_start_failed', {
@@ -140,6 +154,7 @@ export default function Checkout() {
       if (err.code === 'delivery_fee_changed') refreshRates();
       showToast(err.message || 'Could not start checkout. Please try again.', 'error');
       setSubmitting(false);
+      setRedirecting(false);
     }
   }
 
@@ -247,7 +262,7 @@ export default function Checkout() {
         </div>
 
         <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
-          {submitting ? 'Starting payment…' : deliveryFee != null ? `Pay ${formatMoney(total)} with Paystack` : 'Pay with Paystack'}
+          {redirecting ? 'Redirecting you to Paystack…' : submitting ? 'Starting payment…' : deliveryFee != null ? `Pay ${formatMoney(total)} with Paystack` : 'Pay with Paystack'}
         </button>
       </form>
 

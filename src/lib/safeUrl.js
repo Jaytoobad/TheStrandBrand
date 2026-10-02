@@ -11,3 +11,18 @@ export function safeExternalUrl(value) {
     return null;
   }
 }
+
+// Mirrors safePaystackUrl in supabase/functions/initialize-payment. The browser
+// is about to be navigated to this URL, so it is checked again on this side
+// before the customer leaves the store — if the response is missing, malformed
+// or points anywhere but Paystack, checkout fails loudly and the cart is left
+// intact instead of the page navigating somewhere unexpected.
+export function isPaystackCheckoutUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) return false;
+  try {
+    const { protocol, hostname } = new URL(value.trim());
+    return protocol === 'https:' && /(^|\.)paystack\.com$/.test(hostname);
+  } catch {
+    return false;
+  }
+}
