@@ -9,6 +9,15 @@ supabase/.temp
 # Promo video renders (large files; share the mp4 directly instead)
 brag-output*/
 
+# Generated link-preview candidates — pick one, then copy it over
+# public/assets/og-image.png. Committed copies would bloat the repo.
+scripts/og-candidates/
+
+# Reference images dropped into public/assets by hand. Everything in public/
+# ships to production, so keep working files out of it.
+public/assets/WhatsApp Image*
+public/assets/*.jpeg
+
 # Local AI-assistant skill files (not part of the site)
 .agents/
 .claude/
