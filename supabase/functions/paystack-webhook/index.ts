@@ -41,16 +41,23 @@ Deno.serve(async (req) => {
       // Same verify-and-fulfil logic the redirect flow uses (_shared/fulfil-payment.ts),
       // so there is exactly one code path that ever marks an order paid.
       const result = await verifyAndFulfil(String(reference));
-      if (result.error) console.warn('Webhook charge.success not fulfilled:', reference, result.error);
+      if (result.error) {
+        console.warn('Webhook charge.success not fulfilled:', reference, result.error);
+        // Final provider failures and amount mismatches must not be fulfilled,
+        // but retryable verification/database failures should be retried by Paystack.
+        if (result.error === 'Payment was not successful.' || result.error === 'Payment amount could not be verified.') {
+          return new Response('ok', { status: 200 });
+        }
+        return new Response('Temporary payment processing failure', { status: 500 });
+      }
     }
 
-    // Always 200 quickly so Paystack doesn't endlessly retry; log anything unexpected.
+    // Acknowledge events that were processed or intentionally ignored.
     return new Response('ok', { status: 200 });
   } catch (err) {
     console.error('Webhook error:', err);
-    // Still return 200 — the redirect-based verify-payment call acts as a
-    // fallback, and returning an error here just causes noisy retries.
-    return new Response('received', { status: 200 });
+    // Non-2xx responses trigger Paystack's retry schedule for transient errors.
+    return new Response('Temporary webhook processing failure', { status: 500 });
   }
 });
 

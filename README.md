@@ -188,9 +188,12 @@ There are three:
 | `verify-payment` | Called by the frontend right after Paystack redirects back. Verifies the transaction directly with Paystack, then marks the order paid and safely decrements stock. Idempotent — safe to call twice. |
 | `paystack-webhook` | Called directly by Paystack's servers (not the browser) when a payment's status changes. This is the *reliable* path, since a customer can close their browser before the redirect fires. Verifies Paystack's HMAC signature before trusting anything. |
 
-After a payment is first confirmed, `verify-payment` sends an order confirmation
-email through Resend and an SMS through Twilio. The handlers are idempotent so
-the webhook and redirect verification do not send duplicate confirmations.
+After a payment is first confirmed, shared fulfilment sends an order confirmation
+email through Resend and optionally an SMS through Twilio. Supabase Auth emails
+(signup confirmation and password reset) use the separate Brevo SMTP configuration
+in the Supabase dashboard; that does not route order emails. Twilio is optional
+and order SMS is skipped unless its secrets are configured. The handlers are
+idempotent so the webhook and redirect verification do not send duplicate confirmations.
 
 Deploy with the [Supabase CLI](https://supabase.com/docs/guides/cli):
 
@@ -240,11 +243,18 @@ Edge Functions by Supabase — you don't need to set these yourself.
 4. Use Paystack's [test cards](https://paystack.com/docs/payments/test-payments/)
    to test the full flow before going live.
 
+Paystack's [Ghana pricing page](https://paystack.com/gh/pricing) currently lists
+a 1.95% fee for local transactions. Its [Merchant Services Agreement](https://paystack.com/gh/terms?localeUpdate=true#merchant-services-agreement)
+states that card-scheme rules prohibit surcharges for card payments. Do not hide
+a payment surcharge in delivery fees. Confirm any cost-recovery plan with
+Paystack and Ghana-qualified counsel; the safer option is to include business
+costs in advertised product prices consistently across payment methods.
+
 ## 14. Webhook Setup
 
 1. After deploying `paystack-webhook` (Section 11), find its URL — it will
    look like:
-   `https://<your-project-ref>.functions.supabase.co/paystack-webhook`
+   `https://<your-project-ref>.supabase.co/functions/v1/paystack-webhook`
 2. In the Paystack dashboard, go to **Settings → API Keys & Webhooks** and
    paste that URL into **Webhook URL**.
 3. Paystack will now call this function on every transaction event; the
@@ -403,6 +413,8 @@ and deployment requirements are listed below.
 - `0003_unique_verified_reviews.sql` (one verified review per product/order)
 - `0004_refund_policy_acceptance.sql` (record checkout policy acceptance)
 - `0005_bind_reviews_to_delivered_order.sql` (bind review authorization to the delivered order)
+- `0006_harden_function_search_paths.sql` (secure privileged function search paths)
+- `0007_delivery_rates.sql` (delivery fees for Ghana regions)
 
 ### Edge Functions Created
 - `initialize-payment`, `verify-payment`, `paystack-webhook`
@@ -415,13 +427,13 @@ and deployment requirements are listed below.
    `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`, `PUBLIC_SITE_URL`
 
 ### Manual Setup Steps Remaining
-1. Set the real production `VITE_PUBLIC_SITE_URL` in Vercel and match it in Supabase Auth Site URL and Redirect URLs.
-2. Apply migrations `0002_product_preorders.sql` through `0005_bind_reviews_to_delivered_order.sql` in order.
-3. Set Resend and Twilio secrets in Supabase. Verify the sender domain and Ghana SMS delivery with test credentials.
-4. Deploy the updated `initialize-payment`, `verify-payment`, and `paystack-webhook` functions.
-5. Test the full Paystack test flow. Confirm one email/SMS per paid order, correct preorder inventory handling, and no duplicate reviews.
-6. Run `npm run build` before deploying the frontend.
-7. Replace the placeholder contact email and Instagram handle, then have the refund, privacy, cookie, and terms pages reviewed by Ghana-qualified counsel.
+1. In Paystack, verify the business account and confirm the live webhook URL. A production payment succeeded on 30 September 2026, but the webhook dashboard setting and a refund test still need owner verification.
+2. Verify the current Brevo sender and send a safe authentication email. Brevo handles Supabase Auth mail; Resend is currently used by order-confirmation emails; Twilio is optional SMS. Configure only providers you intend to use.
+3. Review the Supabase plan and enable leaked-password protection/backups before relying on the free tier for production.
+4. Add rate limiting or equivalent abuse protection to guest checkout initialization and public order tracking.
+5. Confirm the Instagram handle and have the refund, privacy, cookie, and terms pages reviewed by Ghana-qualified counsel.
+6. Add the production sitemap to Google Search Console.
+7. Run `npm run build` before future frontend deployments.
 
 ### How to Run the Project
 ```bash

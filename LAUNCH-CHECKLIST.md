@@ -81,7 +81,7 @@ Current canonical URL: `https://the-strand-brand.vercel.app` until a custom doma
 - [ ] Brevo: add and verify the domain (DNS records), then change the sender to `hello@yourdomain`
 - [ ] Resend: verify the domain, then set `ORDER_NOTIFICATION_FROM_EMAIL`
 - [ ] Update `contactEmail` in `siteConfig.js`
-- [ ] Update `VITE_PUBLIC_SITE_URL` / `PUBLIC_SITE_URL` in `.env.example` (currently `your-store-domain.example`)
+- [ ] When a custom domain is purchased, update `VITE_PUBLIC_SITE_URL` and `PUBLIC_SITE_URL` in `.env.example`, local/Vercel config, and Supabase Auth
 
 ## 7. Payments (before accepting real money)
 
@@ -89,8 +89,9 @@ Current canonical URL: `https://the-strand-brand.vercel.app` until a custom doma
 - [ ] Paystack → Settings → API Keys & Webhooks → Webhook URL set to
       `https://orsipouxwpxowsgzgjxf.supabase.co/functions/v1/paystack-webhook`
 - [ ] Complete one full test payment, confirm "Order Confirmed" then Track Order
-- [ ] Switch to **live** keys: Vercel `VITE_PAYSTACK_PUBLIC_KEY=pk_live_…` and Supabase secret `PAYSTACK_SECRET_KEY=sk_live_…`, then redeploy both
+- [x] Live mode is active: Vercel public key is `pk_live`; a successful production payment was recorded on 30 September 2026. No additional live payment test was run
 - [ ] Place one small real order and refund it from Paystack to confirm the full flow
+- [ ] Confirm compliant fee-recovery pricing: Paystack's Merchant Agreement says card rules prohibit card acceptance surcharges. Do not add a payment-specific fee to delivery without written Paystack and Ghana legal advice; consider uniform advertised product pricing instead
 
 ## 8. Accounts, analytics and SEO
 
@@ -101,6 +102,14 @@ Current canonical URL: `https://the-strand-brand.vercel.app` until a custom doma
 - [ ] Google Search Console: add the site, then submit `https://the-strand-brand.vercel.app/sitemap.xml` (use your own domain once you have one)
 - [ ] Google Business Profile (optional)
 
-## 9. Marketing
+## 9. Security follow-up
+
+- [x] Baseline Vercel security headers configured in `vercel.json`
+- [x] Paystack webhook verifies HMAC signatures; transient processing failures now return non-2xx so Paystack retries
+- [ ] Enable leaked-password protection (Supabase advisor reports it disabled; the feature requires Pro)
+- [ ] Add abuse protection/rate limiting to guest checkout initialization and public order tracking
+- [ ] Review Supabase advisor warnings for the `is_admin` and `track_order` `SECURITY DEFINER` RPCs; they are intentional, but public order tracking should be rate-limited
+
+## 10. Marketing
 
 - [ ] Short promo video ("brag" skill). Needs FFmpeg installed on this PC; not made yet
