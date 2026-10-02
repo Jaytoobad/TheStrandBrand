@@ -134,9 +134,20 @@ export default function Checkout() {
       if (!isPaystackCheckoutUrl(result?.authorizationUrl)) {
         throw new Error('Could not start payment. Please try again.');
       }
-      sessionStorage.setItem('tsb_pending_order', result.orderNumber);
-      // Lets guests land on their tracked order after payment without retyping their email.
-      sessionStorage.setItem('tsb_pending_contact', form.email.trim());
+      // Reaching Paystack must not depend on browser storage. Merely touching
+      // window.sessionStorage throws a SecurityError where a customer blocks
+      // cookies or site data (Safari "Block all cookies", some privacy modes),
+      // which used to abort the redirect after the order was already created —
+      // the customer stayed on the checkout page with a live, unpaid order.
+      // Both keys are conveniences only: OrderConfirmation reads the order
+      // number from the URL and the reference from the query string.
+      try {
+        // Lets guests land on their tracked order after payment without retyping their email.
+        sessionStorage.setItem('tsb_pending_order', result.orderNumber);
+        sessionStorage.setItem('tsb_pending_contact', form.email.trim());
+      } catch {
+        // Storage unavailable — the redirect below still has to happen.
+      }
       clearCart();
       // The order is recorded but unpaid, so the basket is deliberately not
       // restored if this customer is interrupted at Paystack — it would go on
