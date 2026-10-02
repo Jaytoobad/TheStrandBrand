@@ -108,7 +108,6 @@ export default function Checkout() {
     }
     try {
       const payload = {
-        userId: user?.id ?? null,
         policyAccepted,
         customer: { name: form.name, email: form.email, phone: form.phone },
         delivery: {

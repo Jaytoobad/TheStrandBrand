@@ -8,9 +8,18 @@ const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 // verification all happen server-side. See supabase/functions/.
 
 export async function initializePayment(payload) {
+  // The Edge Function decides whether an order belongs to an account, so send
+  // the session token. It verifies this server-side instead of trusting any id
+  // in the request body.
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
   const res = await fetch(`${FUNCTIONS_BASE}/initialize-payment`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...getPostHogHeaders() },
+    headers: {
+      'Content-Type': 'application/json',
+      ...getPostHogHeaders(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(payload),
   });
   const data = await res.json();

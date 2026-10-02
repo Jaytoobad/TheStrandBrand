@@ -57,12 +57,24 @@ function orderNumber() {
   return `TSB-${ymd}-${rand}`;
 }
 
+// Which account (if any) this order belongs to. The browser may send a
+// Supabase access token; we verify it here and use the identity from the
+// verified token. Nothing in the request body can decide this, so an order
+// can never be attached to somebody else's account by guessing an id.
+async function authenticatedUserId(req: Request): Promise<string | null> {
+  const header = req.headers.get('authorization');
+  if (!header?.startsWith('Bearer ')) return null;
+  const { data, error } = await supabase.auth.getUser(header.slice(7));
+  if (error || !data?.user) return null;
+  return data.user.id;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
     const body = await req.json();
-    const { items, customer, delivery, userId, policyAccepted } = body;
+    const { items, customer, delivery, policyAccepted } = body;
     const posthogDistinctId = req.headers.get('x-posthog-distinct-id');
     const posthogSessionId = req.headers.get('x-posthog-session-id');
     // items: [{ productId, variantId, quantity }]
@@ -172,7 +184,7 @@ Deno.serve(async (req) => {
       .from('orders')
       .insert({
         order_number: orderNumber(),
-        user_id: userId ?? null,
+        user_id: await authenticatedUserId(req),
         customer_email: customer.email,
         customer_phone: customer.phone,
         customer_name: customer.name,
