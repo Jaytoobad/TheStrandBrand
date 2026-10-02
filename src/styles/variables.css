@@ -24,6 +24,9 @@
   --color-whatsapp-dark: #1da851;
 
   --font-heading: 'Cormorant Garamond', Georgia, serif;
+  /* Script face for the slogan line. Free, OFL-licensed Great Vibes stands in
+     for the client's "Paty" (Carolina Mejia Villegas), which is a paid font. */
+  --font-script: 'Great Vibes', 'Snell Roundhand', cursive;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   --radius-sm: 6px;

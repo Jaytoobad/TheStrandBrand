@@ -34,7 +34,9 @@ export const siteConfig = {
   heroSlides: [
     {
       image: '/assets/hero-placeholder-1.png',
-      heading: 'HI BEAUTIFUL, YOUR SIGNATURE LOOK STARTS HERE!',
+      heading: 'Hi Beautiful,',
+      // Rendered in the script face on its own line — see .hero-heading-script.
+      headingScript: 'Your Signature Look Starts Here!',
       subheading: 'Discover beautiful wigs designed to complement your style.',
       primaryCta: { label: 'Shop Wigs', href: '/shop' },
       secondaryCta: { label: 'Explore Collection', href: '/shop?filter=collections' },
