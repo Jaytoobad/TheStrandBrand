@@ -30,7 +30,7 @@ Last reviewed: 1 October 2026
 | [x] | "The Collection" photo on the home page | Done: `src/assets/collection-hair.jpg` (bundles + 3 wigs) |
 | [ ] | Product photos | Upload in **Admin → Products** (fallback: `public/assets/placeholder-product.jpg`) |
 | [ ] | Category photos | Upload in **Admin → Categories** (fallback: `public/assets/placeholder-category.jpg`) |
-| [x] | Link-preview image for WhatsApp/Instagram shares | Done: `public/assets/og-image.png` (logo on pink, 1200×630) |
+| [x] | Link-preview image for WhatsApp/Instagram shares | Done: `public/assets/og-image.jpg` (1200×630, slogan in white on the hero photo). Regenerate with `node scripts/make-og-image.mjs` — the client's "Paty" script face is a paid font, so the preview currently uses the free OFL Great Vibes substitute |
 | [x] | Unused founder photo | Removed unused `public/assets/placeholder-ceo.jpg` placeholder |
 | [x] | Old collection photo | `src/assets/background.jpg.jpg` was already absent and is no longer referenced |
 
