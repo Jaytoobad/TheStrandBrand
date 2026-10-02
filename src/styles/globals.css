@@ -346,6 +346,9 @@ html, body { overflow-x: hidden; }
   color: #fff;
   margin-bottom: 0.4em;
 }
+/* Longer slogans need a slightly smaller size so they stay on two or three
+   lines instead of pushing the buttons off a short hero. */
+.hero-content h1.hero-heading-long { font-size: clamp(1.9rem, 3.6vw, 2.7rem); }
 .hero-content p { font-size: 1.05rem; margin-bottom: 1.6em; color: #f2ece7; }
 .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
 .hero-arrow {

@@ -20,7 +20,7 @@ export default function HeroSlider() {
     <section className="hero" style={{ backgroundImage: `url(${slide.image})` }}>
       <div className="hero-overlay" />
       <div className="container hero-content fade-in" key={index}>
-        <h1>{slide.heading}</h1>
+        <h1 className={slide.heading.length > 32 ? 'hero-heading-long' : undefined}>{slide.heading}</h1>
         <p>{slide.subheading}</p>
         <div className="hero-ctas">
           <Link to={slide.primaryCta.href} className="btn btn-primary">{slide.primaryCta.label}</Link>

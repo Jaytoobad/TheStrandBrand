@@ -6,7 +6,7 @@
 
 export const siteConfig = {
   brandName: 'TheStrandBrand',
-  tagline: 'Your Hair. Your Crown.',
+  tagline: 'Hi Beautiful, Your Signature Look Starts Here!',
 
   // --- Contact / social ---
   // WhatsApp: digits only, country code first, no + or spaces
@@ -34,7 +34,7 @@ export const siteConfig = {
   heroSlides: [
     {
       image: '/assets/hero-placeholder-1.png',
-      heading: 'YOUR HAIR. YOUR CROWN.',
+      heading: 'HI BEAUTIFUL, YOUR SIGNATURE LOOK STARTS HERE!',
       subheading: 'Discover beautiful wigs designed to complement your style.',
       primaryCta: { label: 'Shop Wigs', href: '/shop' },
       secondaryCta: { label: 'Explore Collection', href: '/shop?filter=collections' },

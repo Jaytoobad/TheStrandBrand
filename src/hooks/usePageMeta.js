@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 //   usePageMeta('Shop All', 'Browse premium wigs — body wave, bone straight, curly and more.');
 export default function usePageMeta(title, description) {
   useEffect(() => {
-    document.title = title ? `${title} | TheStrandBrand` : 'TheStrandBrand | Your Hair. Your Crown.';
+    document.title = title ? `${title} | TheStrandBrand` : 'TheStrandBrand | Hi Beautiful, Your Signature Look Starts Here!';
 
     if (description) {
       let tag = document.querySelector('meta[name="description"]');
