@@ -80,13 +80,11 @@ Deno.serve(async (req) => {
     // Both are hourly so a customer double-submitting or refreshing checkout
     // is never blocked.
     const emailKey = String(customer.email).trim().toLowerCase().slice(0, 200);
-    const rateLimited = !(await allowRequest(
-      [
-        { scope: 'checkout_ip', max: 40, windowSeconds: 3600 },
-        { scope: 'checkout_email', max: 10, windowSeconds: 3600 },
-      ],
-      [clientIdentifier(req), emailKey],
-    ));
+    const ipKey = clientIdentifier(req);
+    const rateLimited = !(await allowRequest([
+      { scope: 'checkout_ip', max: 40, windowSeconds: 3600, identifier: ipKey },
+      { scope: 'checkout_email', max: 10, windowSeconds: 3600, identifier: emailKey },
+    ]));
     if (rateLimited) {
       return json({
         error: 'Too many checkout attempts from this device. Please wait a few minutes and try again, or message us on WhatsApp.',

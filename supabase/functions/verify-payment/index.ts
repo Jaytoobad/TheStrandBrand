@@ -28,13 +28,10 @@ Deno.serve(async (req) => {
 
     // Verification is idempotent, so the only abuse here is hammering the
     // endpoint with guessed references. Capped per IP and per reference.
-    const rateLimited = !(await allowRequest(
-      [
-        { scope: 'verify_ip', max: 60, windowSeconds: 3600 },
-        { scope: 'verify_reference', max: 20, windowSeconds: 3600 },
-      ],
-      [clientIdentifier(req), String(reference).slice(0, 100)],
-    ));
+    const rateLimited = !(await allowRequest([
+      { scope: 'verify_ip', max: 60, windowSeconds: 3600, identifier: clientIdentifier(req) },
+      { scope: 'verify_reference', max: 20, windowSeconds: 3600, identifier: String(reference).slice(0, 100) },
+    ]));
     if (rateLimited) {
       return json({
         error: 'Too many verification attempts. Please wait a few minutes and try again.',

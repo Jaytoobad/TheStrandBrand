@@ -29,39 +29,39 @@ type Limit = {
   scope: string;
   max: number;
   windowSeconds: number;
+  identifier: string;
 };
 
 /**
- * Spends one rate-limit token for each identifier and reports whether the call
- * is allowed. Identifiers are plain strings (an IP address, or an email for
- * per-customer limits). When the check fails, the reason is logged and the
- * function returns false rather than throwing, so callers decide the response.
+ * Spends one rate-limit token per rule and reports whether the call is allowed.
+ * Each rule names its own identifier (an IP address, or an email for
+ * per-customer limits) so a per-IP limit is never charged to an email and vice
+ * versa. When a limit is reached it is logged and false is returned rather than
+ * throwing, so callers decide the response.
  */
-export async function allowRequest(limits: Limit[], identifiers: string[]): Promise<boolean> {
+export async function allowRequest(rules: Limit[]): Promise<boolean> {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  for (const limit of limits) {
-    for (const identifier of identifiers) {
-      const { data, error } = await supabase.rpc('consume_rate_limit', {
-        p_scope: limit.scope,
-        p_limit: limit.max,
-        p_window_seconds: limit.windowSeconds,
-        p_identifier: identifier,
-      });
+  for (const rule of rules) {
+    const { data, error } = await supabase.rpc('consume_rate_limit', {
+      p_scope: rule.scope,
+      p_limit: rule.max,
+      p_window_seconds: rule.windowSeconds,
+      p_identifier: rule.identifier,
+    });
 
-      if (error) {
-        // Never block a real customer because the limiter itself is broken.
-        console.error('Rate limit check failed:', error);
-        continue;
-      }
+    if (error) {
+      // Never block a real customer because the limiter itself is broken.
+      console.error('Rate limit check failed:', error);
+      continue;
+    }
 
-      if (!data) {
-        console.warn(`Rate limit reached for scope "${limit.scope}".`);
-        return false;
-      }
+    if (!data) {
+      console.warn(`Rate limit reached for scope "${rule.scope}".`);
+      return false;
     }
   }
 
