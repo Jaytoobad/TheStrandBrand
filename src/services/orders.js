@@ -77,15 +77,23 @@ export async function fetchOrderById(orderId) {
   };
 }
 
-// Public order tracking: calls the track_order() database function, which
-// requires BOTH the order number and a matching email/phone before it
-// returns anything — see supabase/migrations/0001_init.sql. This means a
+// Public order tracking: calls the track_order_limited() database function,
+// which requires BOTH the order number and a matching email/phone before it
+// returns anything and rate-limits attempts per caller IP — see
+// supabase/migrations/0001_init.sql and 0008_rate_limiting.sql. This means a
 // stranger who only guesses an order number learns nothing.
 export async function trackOrder({ orderNumber, contact }) {
-  const { data, error } = await supabase.rpc('track_order', {
+  const { data, error } = await supabase.rpc('track_order_limited', {
     p_order_number: orderNumber.trim(),
     p_contact: contact.trim(),
   });
-  if (error) throw error;
+  if (error) {
+    const rateLimited = /too many/i.test(error.message || '');
+    throw new Error(
+      rateLimited
+        ? error.message
+        : 'We could not look up that order right now. Please try again shortly.',
+    );
+  }
   return data?.[0] ?? null;
 }

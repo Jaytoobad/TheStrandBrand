@@ -320,6 +320,31 @@ product appears on the shop immediately — no redeploy needed.
 Customers with an account can submit one review per product after its order
 is marked delivered. Reviews remain pending until approved in Admin → Reviews.
 
+Public tracking goes through the `track_order_limited()` database function: it
+requires the order number **and** a matching email/phone, and it spends one
+rate-limit token per attempt, so order numbers cannot be probed in bulk.
+
+### Abuse protection on public endpoints
+
+Guest checkout and payment verification are unauthenticated, so they are
+rate-limited with counters kept in Postgres (`0008_rate_limiting.sql`), not in
+function memory — Edge Function instances are not shared, so a memory counter
+resets whenever an attacker simply makes more calls.
+
+| Scope | Limit | Window | Key |
+|---|---|---|---|
+| `checkout_ip` | 40 | 1 hour | Caller IP |
+| `checkout_email` | 10 | 1 hour | Customer email |
+| `verify_ip` | 60 | 1 hour | Caller IP |
+| `verify_reference` | 20 | 1 hour | Payment reference |
+| `track_order` | 15 | 10 minutes | Caller IP |
+
+Per-IP limits are generous because many Ghanaian mobile customers share one
+public IP (CGNAT); the tighter per-email limit is what actually ties a flood of
+orders to one person. `track_order(text, text)` itself is revoked for `anon`
+and `authenticated` so the limiter cannot be bypassed. Counters older than two
+days are pruned automatically.
+
 ## 19. Development Mode
 
 ```bash
@@ -341,9 +366,9 @@ Runs Vite's dev server with hot reload at `http://localhost:5173`.
 5. Configure the Edge Function notification secrets from Section 12, deploy
    `verify-payment`, `initialize-payment`, and `paystack-webhook`, then test a
    Paystack test payment and confirm one email and one SMS are delivered.
-6. Apply database migrations `0002` through `0005`; customer preorder,
-   checkout policy acknowledgement, and review access depend on these columns
-   and policies.
+6. Apply database migrations `0002` through `0008`; customer preorder,
+   checkout policy acknowledgement, review access, per-region delivery fees and
+   public rate limiting depend on these columns, policies and functions.
 
 ## 21. Troubleshooting
 
@@ -415,6 +440,7 @@ and deployment requirements are listed below.
 - `0005_bind_reviews_to_delivered_order.sql` (bind review authorization to the delivered order)
 - `0006_harden_function_search_paths.sql` (secure privileged function search paths)
 - `0007_delivery_rates.sql` (delivery fees for Ghana regions)
+- `0008_rate_limiting.sql` (shared rate-limit counters for public endpoints)
 
 ### Edge Functions Created
 - `initialize-payment`, `verify-payment`, `paystack-webhook`
@@ -430,7 +456,7 @@ and deployment requirements are listed below.
 1. In Paystack, verify the business account and confirm the live webhook URL. A production payment succeeded on 30 September 2026, but the webhook dashboard setting and a refund test still need owner verification.
 2. Verify the current Brevo sender and send a safe authentication email. Brevo handles Supabase Auth mail; Resend is currently used by order-confirmation emails; Twilio is optional SMS. Configure only providers you intend to use.
 3. Review the Supabase plan and enable leaked-password protection/backups before relying on the free tier for production.
-4. Add rate limiting or equivalent abuse protection to guest checkout initialization and public order tracking.
+4. Run `supabase functions deploy initialize-payment verify-payment` so the new rate limits take effect, and re-run `npm run build` for the updated checkout and tracking pages.
 5. Confirm the Instagram handle and have the refund, privacy, cookie, and terms pages reviewed by Ghana-qualified counsel.
 6. Add the production sitemap to Google Search Console.
 7. Run `npm run build` before future frontend deployments.

@@ -106,9 +106,9 @@ Current canonical URL: `https://the-strand-brand.vercel.app` until a custom doma
 
 - [x] Baseline Vercel security headers configured in `vercel.json`
 - [x] Paystack webhook verifies HMAC signatures; transient processing failures now return non-2xx so Paystack retries
-- [ ] Enable leaked-password protection (Supabase advisor reports it disabled; the feature requires Pro)
-- [ ] Add abuse protection/rate limiting to guest checkout initialization and public order tracking
-- [ ] Review Supabase advisor warnings for the `is_admin` and `track_order` `SECURITY DEFINER` RPCs; they are intentional, but public order tracking should be rate-limited
+- [ ] Enable leaked-password protection (Supabase advisor reports it disabled; the feature requires Pro) — dashboard step, no code change
+- [x] Rate limiting added to guest checkout initialization and public order tracking (`supabase/functions/_shared/rate-limit.ts`, migration `0008_rate_limiting.sql`). Limits: checkout 40/IP + 10/email per hour, verification 60/IP + 20/reference per hour, tracking 15/IP per 10 minutes. **Deploy required:** `supabase db push` then `supabase functions deploy initialize-payment verify-payment`
+- [x] Reviewed the `is_admin` and `track_order` `SECURITY DEFINER` RPCs. Both pin `search_path = ''` and were revoked from `public` (migration `0006`); `track_order` is now revoked from `anon`/`authenticated` so the only public entry point is the rate-limited `track_order_limited`
 
 ## 10. Marketing
 

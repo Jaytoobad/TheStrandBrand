@@ -12,6 +12,7 @@
 // ============================================================================
 
 import { verifyAndFulfil } from '../_shared/fulfil-payment.ts';
+import { allowRequest, clientIdentifier } from '../_shared/rate-limit.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,6 +25,22 @@ Deno.serve(async (req) => {
   try {
     const { reference } = await req.json();
     if (!reference) return json({ error: 'Missing payment reference.' }, 400);
+
+    // Verification is idempotent, so the only abuse here is hammering the
+    // endpoint with guessed references. Capped per IP and per reference.
+    const rateLimited = !(await allowRequest(
+      [
+        { scope: 'verify_ip', max: 60, windowSeconds: 3600 },
+        { scope: 'verify_reference', max: 20, windowSeconds: 3600 },
+      ],
+      [clientIdentifier(req), String(reference).slice(0, 100)],
+    ));
+    if (rateLimited) {
+      return json({
+        error: 'Too many verification attempts. Please wait a few minutes and try again.',
+        code: 'rate_limited',
+      }, 429);
+    }
 
     const result = await verifyAndFulfil(String(reference));
     return json(result, result.error ? 400 : 200);

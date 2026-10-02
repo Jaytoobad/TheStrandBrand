@@ -28,16 +28,25 @@ export default function TrackOrder() {
   const [orderNumber, setOrderNumber] = useState(searchParams.get('order') || '');
   const [contact, setContact] = useState(handoffContact);
   const [order, setOrder] = useState(null);
-  const [status, setStatus] = useState('idle'); // idle | loading | not_found | found
+  const [status, setStatus] = useState('idle'); // idle | loading | not_found | found | rate_limited
+  const [statusMessage, setStatusMessage] = useState('');
 
   async function runSearch(number, contactValue) {
     setStatus('loading');
+    setStatusMessage('');
     try {
       const result = await trackOrder({ orderNumber: number, contact: contactValue });
       if (result) { setOrder(result); setStatus('found'); }
       else { setOrder(null); setStatus('not_found'); }
-    } catch {
-      setStatus('not_found');
+    } catch (err) {
+      setOrder(null);
+      const message = err?.message || '';
+      if (/too many/i.test(message)) {
+        setStatus('rate_limited');
+        setStatusMessage(message);
+      } else {
+        setStatus('not_found');
+      }
     }
   }
 
@@ -79,6 +88,12 @@ export default function TrackOrder() {
       {status === 'not_found' && (
         <div className="empty-state">
           <p>We couldn't find an order matching those details. Please double-check the order number and contact info.</p>
+        </div>
+      )}
+
+      {status === 'rate_limited' && (
+        <div className="empty-state">
+          <p>{statusMessage || 'Too many tracking attempts. Please wait a few minutes and try again.'}</p>
         </div>
       )}
 

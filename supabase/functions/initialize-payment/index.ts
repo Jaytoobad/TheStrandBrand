@@ -15,6 +15,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { captureServerEvent } from '../_shared/posthog.ts';
+import { allowRequest, clientIdentifier } from '../_shared/rate-limit.ts';
 
 const PAYSTACK_SECRET_KEY = Deno.env.get('PAYSTACK_SECRET_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -70,6 +71,27 @@ Deno.serve(async (req) => {
 
     if (!items?.length || !customer?.email || !delivery?.region || policyAccepted !== true) {
       return json({ error: 'Missing required checkout information.' }, 400);
+    }
+
+    // --- Abuse protection (see ../_shared/rate-limit.ts). ---
+    // Per-IP limits are generous because many Ghanaian mobile customers share
+    // one public IP; the per-email limit is the tighter of the two because an
+    // email address is what actually ties a flood of orders to one person.
+    // Both are hourly so a customer double-submitting or refreshing checkout
+    // is never blocked.
+    const emailKey = String(customer.email).trim().toLowerCase().slice(0, 200);
+    const rateLimited = !(await allowRequest(
+      [
+        { scope: 'checkout_ip', max: 40, windowSeconds: 3600 },
+        { scope: 'checkout_email', max: 10, windowSeconds: 3600 },
+      ],
+      [clientIdentifier(req), emailKey],
+    ));
+    if (rateLimited) {
+      return json({
+        error: 'Too many checkout attempts from this device. Please wait a few minutes and try again, or message us on WhatsApp.',
+        code: 'rate_limited',
+      }, 429);
     }
 
     // --- Delivery fee comes from the database, never from the browser. ---
