@@ -24,6 +24,7 @@ export default function Checkout() {
   const { rates, feeByRegion, refresh: refreshRates } = useDeliveryRates();
   const [submitting, setSubmitting] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [handoff, setHandoff] = useState(null);
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [errors, setErrors] = useState({});
   const [form, setForm] = useState({
@@ -153,6 +154,14 @@ export default function Checkout() {
       // restored if this customer is interrupted at Paystack — it would go on
       // to pay twice. See src/pages/OrderConfirmation.jsx.
       setRedirecting(true);
+      // Keep the URL and order number in state first. The navigation below is
+      // the happy path, but it cannot be trusted on every browser: mobile
+      // Safari and in-app WebViews (a link opened from WhatsApp) drop a
+      // scripted top-level navigation, and in-app browsers hide the address bar
+      // so a redirect that does land looks like nothing happened. If the page
+      // is still mounted a moment later, the fallback below hands the customer
+      // a real link to tap instead of stranding them here.
+      setHandoff({ url: result.authorizationUrl, orderNumber: result.orderNumber });
       window.location.assign(result.authorizationUrl);
     } catch (err) {
       if (canCapturePostHog()) {
@@ -275,6 +284,25 @@ export default function Checkout() {
         <button type="submit" className="btn btn-primary btn-block" disabled={submitting}>
           {redirecting ? 'Redirecting you to Paystack…' : submitting ? 'Starting payment…' : deliveryFee != null ? `Pay ${formatMoney(total)} with Paystack` : 'Pay with Paystack'}
         </button>
+
+        {/* Only ever seen if the browser refused to leave this page. The order
+            is already created, so the customer must be given a way onward
+            rather than left wondering why nothing happens. */}
+        {handoff && (
+          <div className="checkout-handoff" role="alert">
+            <p className="checkout-handoff-title">
+              Your order <strong>{handoff.orderNumber}</strong> is reserved and waiting for payment.
+            </p>
+            <p>Tap below to continue to Paystack and pay {formatMoney(total)}.</p>
+            <a className="btn btn-primary btn-block" href={handoff.url} rel="noopener noreferrer">
+              Continue to Paystack
+            </a>
+            <p className="form-hint">
+              Pay within the next few minutes. If payment is not completed the order is released
+              automatically — you can start a new one at any time.
+            </p>
+          </div>
+        )}
       </form>
 
       <aside className="cart-summary card">

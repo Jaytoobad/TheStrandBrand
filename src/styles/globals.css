@@ -1166,6 +1166,19 @@ html, body { overflow-x: hidden; }
 .checkout-policy-acknowledgement p { min-width: 0; margin: 0; color: var(--color-text); font-size: 0.9rem; line-height: 1.5; }
 .checkout-policy-acknowledgement label { display: inline; margin: 0; color: inherit; font-size: inherit; font-weight: 400; }
 .checkout-policy-acknowledgement a { color: var(--color-primary); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Shown only when the browser refused to hand the customer off to Paystack.
+   Needs to read as an obvious next step, not an error. */
+.checkout-handoff {
+  margin-top: 20px; padding: 18px;
+  border: 1px solid var(--color-primary); border-radius: 10px;
+  background: var(--color-white, #fff);
+}
+.checkout-handoff p { margin: 0 0 12px; font-size: 0.9rem; line-height: 1.5; }
+.checkout-handoff-title { font-size: 1rem; color: var(--color-text); }
+.checkout-handoff .btn { margin-bottom: 12px; }
+.checkout-handoff .form-hint { margin: 0; }
+
 .profile-form { max-width: 520px; }
 
 /* ============================= ADMIN SHELL ============================= */
