@@ -115,6 +115,14 @@ Current canonical URL: `https://the-strand-brand.vercel.app` until a custom doma
 - [x] Paystack `authorization_url` is validated server-side to `https://*.paystack.com` before the browser is redirected, and admin-entered courier tracking URLs are only rendered when they are plain http(s) links (`src/lib/safeUrl.js`)
 - [x] Reviews page at `/reviews` with rating summary, product links and a write-a-review form; footer review strip on every page; "Review this product" link on product pages. Reviews stay restricted to delivered orders and need admin approval
 - [ ] Reviews unlock once real orders are marked delivered — the store has 0 reviews today, so the page shows its invitation state. Never seed placeholder reviews; fake reviews break consumer-protection rules
+- [x] **Critical privilege escalation found and fixed (2 October 2026):** `profiles_update_own` let any signed-in customer write `role = 'admin'` to their own row from the browser console, because RLS row policies do not restrict which columns are written. Confirmed live — the escalated account could then read orders and `is_admin()` returned true. Fixed by `0010_admin_role_protection.sql` (policy forces the stored role to be unchanged, plus a trigger rejecting role writes outside the grant/revoke functions)
+- [x] Admin access is now an explicit list (`admin_accounts`) read by `is_admin()`, not a hand-edited column. Migration `0011_admin_access_control.sql`
+- [x] Granting and revoking go through logged functions (`grant_admin_access` / `revoke_admin_access`). Revoking keeps the row with `revoked_at` set, so history survives and **no customer, order or product data is ever deleted**
+- [x] `admin_audit_log` records every admin grant, revoke and sign-in. An admin can revoke their own access, which is how the last admin hands over cleanly
+- [x] Failed admin sign-ins are counted per email address and blocked for 15 minutes after 8 failures, because Supabase's own limit is per IP and Ghanaian mobile customers share IPs
+- [x] Re-verified after the fix with a throwaway customer account: self-promotion, calling the grant function, and reading the access list or audit log are all refused. The test accounts were deleted and all real data confirmed intact (4 accounts, 29 orders, 40 products)
+- [ ] **Before the owner gets admin access:** enable 2FA on her Supabase account, hand over with `grant_admin_access(...)` (never a manual role edit), and walk her through `/admin/login`. When you no longer need access, revoke your own — do not delete rows
+- [ ] Rotate the Supabase access token used from this machine, then run `npx supabase login`
 
 ## 10. Marketing
 

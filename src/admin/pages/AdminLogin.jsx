@@ -5,17 +5,22 @@ import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../context/ToastContext';
 import { friendlyAuthError } from '../../pages/Login';
 import PasswordInput from '../../components/PasswordInput';
+import { recordAdminLoginAttempt, isAdminLoginBlocked, clearAdminLoginAttempts } from '../../services/adminSecurity';
 
 // Admin login uses the exact same Supabase Auth as customers — there is no
-// separate/hardcoded admin credential. What makes someone an admin is the
-// `role = 'admin'` column on their `profiles` row (set manually — see the
-// README's "How to create the first admin" section), and RLS enforces it
-// server-side regardless of what this page does.
+// separate/hardcoded admin credential. What makes someone an admin is their row
+// in the `admin_accounts` access list, enforced server-side by RLS, so nothing
+// on this page decides who is an administrator.
+//
+// Repeated failures are counted per email address (not just per IP, which a
+// whole neighbourhood can share) and the form refuses further attempts until the
+// window passes. Successful logins are written to an audit trail.
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [blockedUntil, setBlockedUntil] = useState(null);
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -28,10 +33,27 @@ export default function AdminLogin() {
     const passwordValue = String(form.get('password') || password);
     if (!emailValue || !passwordValue) { setError('Enter your email and password.'); return; }
 
+    // Cheap local check first so a script looping this form is slowed even
+    // before it reaches the server.
+    const wait = blockedUntil ? blockedUntil - Date.now() : 0;
+    if (wait > 0) {
+      setError(`Too many failed attempts. Try again in ${Math.ceil(wait / 1000)} seconds.`);
+      return;
+    }
+
     setError('');
     setLoading(true);
+    const ipHint = null; // the server records the address it sees
     try {
       const { user } = await signIn({ email: emailValue, password: passwordValue });
+      const allowed = await recordAdminLoginAttempt(emailValue, true, ipHint);
+      if (!allowed) {
+        await signOut().catch(() => {});
+        setBlockedUntil(Date.now() + 15 * 60 * 1000);
+        setError('Too many failed attempts. Try again in 15 minutes.');
+        return;
+      }
+
       const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
       if (profileError) {
         setError('Signed in, but your account details could not be loaded. Please try again.');
@@ -42,11 +64,20 @@ export default function AdminLogin() {
         setError('This account does not have admin access.');
         return;
       }
+      await clearAdminLoginAttempts(emailValue).catch(() => {});
+      await supabase.rpc('record_admin_signin').catch(() => {});
       navigate('/admin', { replace: true });
     } catch (err) {
       const message = friendlyAuthError(err);
-      setError(message);
-      showToast(message, 'error');
+      const stillAllowed = await recordAdminLoginAttempt(emailValue, false, ipHint).catch(() => true);
+      if (!stillAllowed) {
+        setBlockedUntil(Date.now() + 15 * 60 * 1000);
+        setError('Too many failed attempts. Try again in 15 minutes.');
+        showToast('Too many failed attempts. This account is paused for 15 minutes.', 'error');
+      } else {
+        setError(message);
+        showToast(message, 'error');
+      }
     } finally {
       setLoading(false);
     }
@@ -66,6 +97,7 @@ export default function AdminLogin() {
         </div>
         {error && <p className="form-error" role="alert">{error}</p>}
         <button className="btn btn-primary btn-block" disabled={loading}>{loading ? 'Signing in…' : 'Login'}</button>
+        <p className="admin-login-note">Admin sign-ins are recorded for security. Enable two-factor authentication on your Supabase account.</p>
       </form>
     </div>
   );

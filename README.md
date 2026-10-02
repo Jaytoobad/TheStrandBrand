@@ -263,27 +263,51 @@ costs in advertised product prices consistently across payment methods.
 ## 15. How Authentication Works
 
 Customers and admins use the exact same Supabase Auth system — there is no
-separate hardcoded admin login. What makes an account an "admin" is a single
-column: `profiles.role = 'admin'`. This is checked two ways:
+separate hardcoded admin login. Access is held in the `admin_accounts` access
+list (migration `0011_admin_access_control.sql`), and is checked two ways:
 - **Frontend** (`AdminRoute.jsx`) redirects non-admins away from `/admin/*`
   for a smooth user experience.
-- **Database** (RLS policies using the `is_admin()` function in the SQL
-  migration) is the *real* security boundary — it enforces the same rule at
+- **Database** (RLS policies using the `is_admin()` function, which reads the
+  access list) is the *real* security boundary — it enforces the same rule at
   the data layer, so even a modified frontend couldn't read/write admin-only
   data.
 
-## 16. How to Create the First Admin
+`profiles.role` mirrors the access list so the existing UI keeps working, but a
+database trigger rejects any direct write to it. A signed-in customer cannot
+promote themselves: an RLS policy forces the stored role to be unchanged, and
+the trigger refuses role changes that do not come from the grant/revoke
+functions. This was a real hole found and fixed on 2 October 2026 — see the
+security notes in the launch checklist.
 
-There is intentionally no "make me admin" button anywhere in the app (that
-would be a security hole). To create your first admin:
+## 16. Granting and Revoking Admin Access
 
-1. Register a normal account through the storefront (`/register`) and verify
-   the email.
-2. In the Supabase dashboard, go to **SQL Editor** and run:
+There is intentionally no "make me admin" button in the app. To give someone
+admin access:
+
+1. Have them register a normal account through the storefront (`/register`) and
+   verify the email.
+2. While signed in as an existing admin, run:
    ```sql
-   update profiles set role = 'admin' where email = 'you@example.com';
+   select public.grant_admin_access(
+     (select id from public.profiles where email = 'them@example.com'),
+     'Promoted to owner'
+   );
    ```
-3. Log in at `/admin/login` with that account.
+3. They log in at `/admin/login`. `/admin` becomes reachable for them.
+
+To take access away — including your own, which is how the last admin hands over:
+
+```sql
+select public.revoke_admin_access(
+  (select id from public.profiles where email = 'them@example.com'),
+  'Left the business'
+);
+```
+
+**This only changes access. It never deletes anything.** Orders, products,
+customers and reviews are untouched. The access-list row is kept with
+`revoked_at` set, and every grant, revoke and admin sign-in is written to
+`admin_audit_log`, so there is a permanent record of who had access and when.
 
 ## 17. How Products Are Added
 
@@ -445,6 +469,8 @@ and deployment requirements are listed below.
 - `0007_delivery_rates.sql` (delivery fees for Ghana regions)
 - `0008_rate_limiting.sql` (shared rate-limit counters for public endpoints)
 - `0009_expire_abandoned_orders.sql` (`expired` status plus scheduled cleanup jobs)
+- `0010_admin_role_protection.sql` (stop customers self-promoting to admin)
+- `0011_admin_access_control.sql` (admin access list, audit trail, sign-in throttling)
 
 ### Edge Functions Created
 - `initialize-payment`, `verify-payment`, `paystack-webhook`
@@ -478,13 +504,17 @@ their [documented test cards](https://paystack.com/docs/payments/test-payments/)
 — test transactions never move real money. Switch to live keys only once
 you've verified the full checkout → webhook → order-status flow end to end.
 
-### How to Create the First Admin
-Register normally through `/register`, verify the email, then in the
-Supabase SQL Editor run:
+### How to Grant Admin Access
+Register normally through `/register`, verify the email, then while signed in as
+an existing admin run in the Supabase SQL Editor:
 ```sql
-update profiles set role = 'admin' where email = 'you@example.com';
+select public.grant_admin_access(
+  (select id from public.profiles where email = 'them@example.com'),
+  'Promoted to owner'
+);
 ```
-Then log in at `/admin/login`.
+Then they log in at `/admin/login`. Revoking is `public.revoke_admin_access(...)`
+and never deletes any data. See section 16.
 
 ---
 
