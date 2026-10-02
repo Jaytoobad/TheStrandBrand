@@ -12,6 +12,7 @@ const TONES = {
   pending_payment: 'is-warn',
   failed: 'is-bad',
   cancelled: 'is-bad',
+  expired: 'is-neutral',
   refunded: 'is-neutral',
 };
 

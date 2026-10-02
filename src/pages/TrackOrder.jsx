@@ -3,6 +3,7 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import { trackOrder } from '../services/orders';
 import { formatMoney } from '../config/siteConfig';
 import DeliveryEstimate from '../components/DeliveryEstimate';
+import { safeExternalUrl } from '../lib/safeUrl';
  import usePageMeta from '../hooks/usePageMeta';
 
 const STATUS_STEPS = ['paid', 'processing', 'packaged', 'dispatched', 'in_transit', 'delivered'];
@@ -15,6 +16,7 @@ const STATUS_LABELS = {
   in_transit: 'In Transit',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
+  expired: 'Checkout Expired',
   refunded: 'Refunded',
 };
 
@@ -107,13 +109,19 @@ export default function TrackOrder() {
             <span className={`badge status-badge status-${order.status}`}>{STATUS_LABELS[order.status]}</span>
           </div>
 
+          {order.status === 'expired' && (
+            <p className="track-eta">
+              This checkout was never completed, so no payment was taken. Place a new order whenever you're ready.
+            </p>
+          )}
+
           {order.estimated_delivery && (
             <p className="track-eta">
               Current delivery estimate: <time dateTime={order.estimated_delivery}>{new Date(`${order.estimated_delivery}T00:00:00`).toLocaleDateString('en-GH', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
             </p>
           )}
 
-          {order.status !== 'cancelled' && order.status !== 'refunded' && order.payment_status === 'paid' && (
+          {order.status !== 'cancelled' && order.status !== 'refunded' && order.status !== 'expired' && order.payment_status === 'paid' && (
             <ol className="status-timeline">
               {STATUS_STEPS.map((step, i) => (
                 <li key={step} className={i <= activeStepIndex ? 'done' : ''}>
@@ -128,7 +136,7 @@ export default function TrackOrder() {
             <div className="track-courier">
               {order.courier_name && <p>Courier: <strong>{order.courier_name}</strong></p>}
               {order.tracking_number && <p>Tracking #: <strong>{order.tracking_number}</strong></p>}
-              {order.external_tracking_url && <a href={order.external_tracking_url} target="_blank" rel="noreferrer">Track with courier →</a>}
+              {safeExternalUrl(order.external_tracking_url) && <a href={safeExternalUrl(order.external_tracking_url)} target="_blank" rel="noreferrer">Track with courier →</a>}
             </div>
           )}
 

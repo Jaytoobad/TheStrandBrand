@@ -110,7 +110,11 @@ Current canonical URL: `https://the-strand-brand.vercel.app` until a custom doma
 - [x] Rate limiting added to guest checkout initialization, payment verification and public order tracking (`supabase/functions/_shared/rate-limit.ts`, migration `0008_rate_limiting.sql`). Limits: checkout 40/IP + 10/email per hour, verification 60/IP + 20/reference per hour, tracking 15/IP per 10 minutes. Migration applied and both functions deployed on 2 October 2026; blocking, counters and the friendly error message verified live
 - [x] Reviewed the `is_admin` and `track_order` `SECURITY DEFINER` RPCs. Both pin `search_path = ''` and were revoked from `public` (migration `0006`); `track_order` is now revoked from `anon`/`authenticated` so the only public entry point is the rate-limited `track_order_limited`
 - [x] Order ownership is decided server-side. `initialize-payment` used to trust a `userId` sent by the browser; it now verifies the Supabase access token and takes the account from the token, so an order can never be attached to another customer's account
-- [ ] Automate cleanup of abandoned `pending_payment` orders (14 have accumulated from unpaid checkouts) with a `pg_cron` job — not yet written
+- [x] Abandoned checkouts expire automatically. Migration `0009_expire_abandoned_orders.sql` adds an `expired` order status and a `pg_cron` job that expires unpaid `pending_payment` orders older than 3 days (14 were cleared on 2 October 2026). A second daily job prunes stale rate-limit counters
+- [x] Full Content-Security-Policy in `vercel.json` (`default-src 'self'`, no inline scripts, images/connections limited to Supabase and PostHog). **If anything looks broken after deploys, this header is the first thing to relax**
+- [x] Paystack `authorization_url` is validated server-side to `https://*.paystack.com` before the browser is redirected, and admin-entered courier tracking URLs are only rendered when they are plain http(s) links (`src/lib/safeUrl.js`)
+- [x] Reviews page at `/reviews` with rating summary, product links and a write-a-review form; footer review strip on every page; "Review this product" link on product pages. Reviews stay restricted to delivered orders and need admin approval
+- [ ] Reviews unlock once real orders are marked delivered — the store has 0 reviews today, so the page shows its invitation state. Never seed placeholder reviews; fake reviews break consumer-protection rules
 
 ## 10. Marketing
 

@@ -200,6 +200,10 @@ export default function ProductDetails() {
             ))}
           </div>
         )}
+        <p className="product-reviews-actions">
+          <Link className="btn btn-outline btn-sm" to={`/reviews?product=${product.slug}#write`}>Review this product</Link>
+          <Link className="btn btn-outline btn-sm" to="/reviews">All reviews ({reviews.length})</Link>
+        </p>
       </div>
     </div>
   );

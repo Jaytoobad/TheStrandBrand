@@ -69,6 +69,19 @@ async function authenticatedUserId(req: Request): Promise<string | null> {
   return data.user.id;
 }
 
+// Paystack hosts checkout on its own domains. Anything else is treated as a
+// tampered response and the customer is not redirected to it.
+function safePaystackUrl(candidate: unknown): string | null {
+  if (typeof candidate !== 'string' || !candidate) return null;
+  try {
+    const { protocol, hostname } = new URL(candidate);
+    const isPaystack = protocol === 'https:' && /(^|\.)paystack\.com$/.test(hostname);
+    return isPaystack ? candidate : null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -254,6 +267,15 @@ Deno.serve(async (req) => {
       return json({ error: 'Could not start payment. Please try again.' }, 502);
     }
 
+    // Only ever hand the browser a Paystack checkout URL. The browser is about
+    // to be redirected here, so a tampered or unexpected host would be an open
+    // redirect off the store — validate it before it leaves this function.
+    const authorizationUrl = safePaystackUrl(paystackData.data?.authorization_url);
+    if (!authorizationUrl) {
+      console.error('Unexpected Paystack authorization URL:', paystackData.data?.authorization_url);
+      return json({ error: 'Could not start payment. Please try again.' }, 502);
+    }
+
     await supabase.from('payments').insert({
       order_id: order.id,
       reference: paystackData.data.reference,
@@ -278,7 +300,7 @@ Deno.serve(async (req) => {
     }
 
     return json({
-      authorizationUrl: paystackData.data.authorization_url,
+      authorizationUrl,
       reference: paystackData.data.reference,
       orderNumber: order.order_number,
     });

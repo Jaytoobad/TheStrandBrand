@@ -319,6 +319,9 @@ product appears on the shop immediately — no redeploy needed.
 
 Customers with an account can submit one review per product after its order
 is marked delivered. Reviews remain pending until approved in Admin → Reviews.
+Customers write reviews from the `/reviews` page (linked in the footer, on
+product pages, and from a delivered order in the account area); the footer shows
+the three most recent approved reviews on every page.
 
 Public tracking goes through the `track_order_limited()` database function: it
 requires the order number **and** a matching email/phone, and it spends one
@@ -441,6 +444,7 @@ and deployment requirements are listed below.
 - `0006_harden_function_search_paths.sql` (secure privileged function search paths)
 - `0007_delivery_rates.sql` (delivery fees for Ghana regions)
 - `0008_rate_limiting.sql` (shared rate-limit counters for public endpoints)
+- `0009_expire_abandoned_orders.sql` (`expired` status plus scheduled cleanup jobs)
 
 ### Edge Functions Created
 - `initialize-payment`, `verify-payment`, `paystack-webhook`

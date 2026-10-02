@@ -5,7 +5,7 @@ import { formatMoney, formatOrderStatus } from '../../config/siteConfig'; // for
 import PageLoader from '../../components/PageLoader';
 import StatusPill from '../components/StatusPill';
 
-const STATUSES = ['pending_payment', 'paid', 'processing', 'packaged', 'dispatched', 'in_transit', 'delivered', 'cancelled', 'refunded'];
+const STATUSES = ['pending_payment', 'paid', 'processing', 'packaged', 'dispatched', 'in_transit', 'delivered', 'cancelled', 'expired', 'refunded'];
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);

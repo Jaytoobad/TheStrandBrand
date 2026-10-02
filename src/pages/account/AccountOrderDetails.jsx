@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { fetchReviewedProductIds, submitReview } from '../../services/reviews';
 import { THUMB_WIDTH, imageFallback, thumbUrl } from '../../lib/imageUrl';
+import { safeExternalUrl } from '../../lib/safeUrl';
 
 const PRODUCT_PLACEHOLDER = '/assets/placeholder-product.jpg';
 
@@ -125,8 +126,8 @@ export default function AccountOrderDetails() {
             <div className="order-tracking-details">
               {order.courier_name && <span>{order.courier_name}</span>}
               {order.tracking_number && (
-                order.external_tracking_url
-                  ? <a href={order.external_tracking_url} target="_blank" rel="noreferrer">Track {order.tracking_number}</a>
+                safeExternalUrl(order.external_tracking_url)
+                  ? <a href={safeExternalUrl(order.external_tracking_url)} target="_blank" rel="noreferrer">Track {order.tracking_number}</a>
                   : <span>Tracking number: {order.tracking_number}</span>
               )}
             </div>
