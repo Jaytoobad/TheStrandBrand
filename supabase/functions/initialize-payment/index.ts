@@ -98,13 +98,37 @@ Deno.serve(async (req) => {
       return json({ error: 'Missing required checkout information.' }, 400);
     }
 
+    // The browser validates all of this, but this endpoint is public and
+    // unauthenticated, so it is checked again here rather than trusted. Without
+    // it a scripted caller could file orders with no name and a junk phone
+    // number, which the business could not contact about delivery.
+    const name = String(customer.name ?? '').trim();
+    const email = String(customer.email).trim();
+    const phone = String(customer.phone ?? '').replace(/\s+/g, '');
+    const city = String(delivery.city ?? '').trim();
+
+    if (name.length < 2) {
+      return json({ error: 'Please enter your full name.' }, 400);
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return json({ error: 'Please enter a valid email address.' }, 400);
+    }
+    // Ghanaian mobile numbers: 10 digits starting with 0, spaces allowed. The
+    // same rule the checkout form applies, so the two cannot disagree.
+    if (!/^0\d{9}$/.test(phone)) {
+      return json({ error: 'Enter a valid 10-digit number starting with 0 (e.g. 024 123 4567).' }, 400);
+    }
+    if (!city) {
+      return json({ error: 'City / Town is required.' }, 400);
+    }
+
     // --- Abuse protection (see ../_shared/rate-limit.ts). ---
     // Per-IP limits are generous because many Ghanaian mobile customers share
     // one public IP; the per-email limit is the tighter of the two because an
     // email address is what actually ties a flood of orders to one person.
     // Both are hourly so a customer double-submitting or refreshing checkout
     // is never blocked.
-    const emailKey = String(customer.email).trim().toLowerCase().slice(0, 200);
+    const emailKey = email.toLowerCase().slice(0, 200);
     const ipKey = clientIdentifier(req);
     const rateLimited = !(await allowRequest([
       { scope: 'checkout_ip', max: 40, windowSeconds: 3600, identifier: ipKey },
@@ -198,9 +222,9 @@ Deno.serve(async (req) => {
       .insert({
         order_number: orderNumber(),
         user_id: await authenticatedUserId(req),
-        customer_email: customer.email,
-        customer_phone: customer.phone,
-        customer_name: customer.name,
+        customer_email: email,
+        customer_phone: phone,
+        customer_name: name,
         subtotal,
         delivery_fee: deliveryFee,
         discount,
@@ -208,7 +232,7 @@ Deno.serve(async (req) => {
         status: 'pending_payment',
         payment_status: 'pending',
         delivery_region: region,
-        delivery_city: delivery.city,
+        delivery_city: city,
         delivery_area: delivery.area ?? null,
         delivery_digital_address: delivery.digitalAddress ?? null,
         delivery_directions: delivery.directions ?? null,
@@ -248,7 +272,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email: customer.email,
+        email,
         amount: Math.round(total * 100), // Paystack expects amount in pesewas (kobo-equivalent for GHS)
         currency: 'GHS',
         // Paystack appends ?trxref=...&reference=... to this URL.
