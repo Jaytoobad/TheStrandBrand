@@ -4,7 +4,7 @@ import { THUMB_WIDTH, imageFallback, thumbUrl } from '../lib/imageUrl';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { addToWishlist, removeFromWishlist } from '../services/wishlist';
-import { displayPrice, isSoldByLength, isSoldOut, pricedVariants } from '../lib/pricing';
+import { displayPrice, isSoldByLength, isSoldOut, pricedVariants, priceRange } from '../lib/pricing';
 import { useState } from 'react';
 
 export default function ProductCard({ product, isWishlisted = false }) {
@@ -22,6 +22,7 @@ export default function ProductCard({ product, isWishlisted = false }) {
   const outOfStock = isSoldOut(product) && !product.allow_preorder;
   const lengths = soldByLength ? pricedVariants(product) : [];
   const cheapest = displayPrice(product);
+  const range = priceRange(product);
 
   async function toggleWishlist(e) {
     e.preventDefault();
@@ -77,7 +78,7 @@ export default function ProductCard({ product, isWishlisted = false }) {
         </div>
         {soldByLength && lengths.length > 0 && (
           <p className="product-card-lengths">
-            {lengths.length} length{lengths.length === 1 ? '' : 's'} available
+            {range ? `${formatMoney(range.min)} – ${formatMoney(range.max)}` : `${lengths.length} length${lengths.length === 1 ? '' : 's'} available`}
           </p>
         )}
       </div>

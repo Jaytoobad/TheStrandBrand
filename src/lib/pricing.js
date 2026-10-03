@@ -19,6 +19,17 @@ export function variantPrice(variant) {
   return variant.price == null ? null : Number(variant.price);
 }
 
+// How a length is written for customers. The admin form stores a bare number
+// ("10", "10.5") so the value can be sorted and compared, which means the inch
+// mark has to be added back on the way out. Values that already carry a mark or
+// a word are left alone rather than being turned into "10"".
+export function lengthLabel(variant) {
+  const raw = String(variant?.option_value ?? '').trim();
+  if (!raw) return '';
+  if (/["”']|\bin\b/i.test(raw)) return raw;
+  return `${raw}"`;
+}
+
 // Options that carry a real per-length price, cheapest first.
 export function pricedVariants(product) {
   return (product?.product_variants || [])
@@ -67,4 +78,14 @@ export function totalStock(product) {
     if (priced.length) return priced.reduce((sum, v) => sum + Number(v.stock || 0), 0);
   }
   return Number(product?.stock || 0);
+}
+
+// The spread of length prices, for "GHS 300 – GHS 900" style labels. Null when
+// the product is not sold by length or has fewer than two prices to span, since
+// a range from a number to itself reads like a mistake.
+export function priceRange(product) {
+  if (!isSoldByLength(product)) return null;
+  const prices = pricedVariants(product).map(variantPrice);
+  if (prices.length < 2) return null;
+  return { min: Math.min(...prices), max: Math.max(...prices) };
 }

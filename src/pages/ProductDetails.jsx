@@ -4,7 +4,7 @@ import { fetchProductBySlug, fetchApprovedReviews } from '../services/products';
 import { formatCategoryName, formatMoney } from '../config/siteConfig';
 import posthog, { canCapturePostHog } from '../lib/posthog';
 import { useCart } from '../context/CartContext';
-import { isSoldByLength, unitPriceFor, displayPrice } from '../lib/pricing';
+import { isSoldByLength, unitPriceFor, displayPrice, lengthLabel, variantPrice } from '../lib/pricing';
 import DeliveryEstimate from '../components/DeliveryEstimate';
 import { useToast } from '../context/ToastContext';
 import PageLoader from '../components/PageLoader';
@@ -166,24 +166,54 @@ export default function ProductDetails() {
 
         {product.description && <p className="product-description">{product.description}</p>}
 
-        {Object.entries(orderedOptionGroups).map(([name, options]) => (
-          <div key={name} className="option-group">
-            <h4>{name}</h4>
-            <div className="option-pills">
-              {options.map((opt) => (
-                <button
-                  key={opt.id}
-                  className={selectedOptions[name] === opt.option_value ? 'option-pill active' : 'option-pill'}
-                  onClick={() => setSelectedOptions((s) => ({ ...s, [name]: opt.option_value }))}
-                  disabled={opt.stock <= 0 && !product.allow_preorder}
-                  aria-pressed={selectedOptions[name] === opt.option_value}
-                >
-                  {opt.option_value}
-                </button>
-              ))}
+        {Object.entries(orderedOptionGroups).map(([name, options]) =>
+          soldByLength ? (
+            <div key={name} className="option-group length-group">
+              <h4 id={`length-group-${name}`}>{name}</h4>
+              <div className="length-list" role="radiogroup" aria-labelledby={`length-group-${name}`}>
+                {options.map((opt) => {
+                  const price = variantPrice(opt);
+                  const soldOut = opt.stock <= 0 && !product.allow_preorder;
+                  const isActive = selectedOptions[name] === opt.option_value;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={isActive}
+                      className={isActive ? 'length-row active' : 'length-row'}
+                      onClick={() => setSelectedOptions((s) => ({ ...s, [name]: opt.option_value }))}
+                      disabled={soldOut}
+                    >
+                      <span className="length-row-name">{lengthLabel(opt)}</span>
+                      {price != null && <span className="length-row-price">{formatMoney(price)}</span>}
+                      <span className={soldOut ? 'length-row-stock out' : 'length-row-stock'}>
+                        {soldOut ? 'Sold out' : product.allow_preorder ? 'Preorder' : `${opt.stock} in stock`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ) : (
+            <div key={name} className="option-group">
+              <h4>{name}</h4>
+              <div className="option-pills">
+                {options.map((opt) => (
+                  <button
+                    key={opt.id}
+                    className={selectedOptions[name] === opt.option_value ? 'option-pill active' : 'option-pill'}
+                    onClick={() => setSelectedOptions((s) => ({ ...s, [name]: opt.option_value }))}
+                    disabled={opt.stock <= 0 && !product.allow_preorder}
+                    aria-pressed={selectedOptions[name] === opt.option_value}
+                  >
+                    {opt.option_value}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        )}
 
         <div className="quantity-row">
           <div className="quantity-selector">
