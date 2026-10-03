@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabaseClient';
+import { displayPrice } from '../lib/pricing';
 
 // Every read here only ever sees active/public rows thanks to RLS —
 // no need to filter is_active client-side for security, though we still
@@ -17,7 +18,10 @@ export async function fetchCategories() {
 export async function fetchProducts({ categorySlug, isNewArrival, isFeatured, search, sort } = {}) {
   let query = supabase
     .from('products')
-    .select('*, categories(name, slug), product_images(url, is_primary, sort_order)')
+    // sold_by_inches and the variants are needed so a length-priced product can
+    // show "from <cheapest length>" instead of a misleading single price or an
+    // out-of-stock badge derived from the product row.
+    .select('*, categories(name, slug, sold_by_inches), product_images(url, is_primary, sort_order), product_variants(id, price, stock)')
     .eq('is_active', true);
 
   if (categorySlug) {
@@ -37,11 +41,11 @@ export async function fetchProducts({ categorySlug, isNewArrival, isFeatured, se
 
   const { data, error } = await query;
   if (error) throw error;
-  // Sort by the price customers actually pay, so sale items land in the right place.
-  if (sort === 'price_asc' || sort === 'price_desc') {
+// Sort by the price customers actually pay, so sale items and length-priced
+// products land in the right place.
+if (sort === 'price_asc' || sort === 'price_desc') {
     const direction = sort === 'price_asc' ? 1 : -1;
-    const effective = (p) => Number(p.sale_price ?? p.price);
-    return [...data].sort((a, b) => (effective(a) - effective(b)) * direction);
+    return [...data].sort((a, b) => (displayPrice(a) - displayPrice(b)) * direction);
   }
   return data;
 }
@@ -51,7 +55,7 @@ export async function fetchProducts({ categorySlug, isNewArrival, isFeatured, se
 export async function fetchCartPrices(productIds) {
   const { data, error } = await supabase
     .from('products')
-    .select('id, price, sale_price, is_active, product_variants(id, price_adjustment)')
+    .select('id, price, sale_price, is_active, product_variants(id, price, price_adjustment)')
     .in('id', productIds);
   if (error) throw error;
   return data;
@@ -60,7 +64,7 @@ export async function fetchCartPrices(productIds) {
 export async function fetchProductBySlug(slug) {
   const { data, error } = await supabase
     .from('products')
-    .select('*, categories(name, slug), product_images(*), product_variants(*)')
+    .select('*, categories(name, slug, sold_by_inches), product_images(*), product_variants(*)')
     .eq('slug', slug)
     .eq('is_active', true)
     .single();

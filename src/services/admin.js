@@ -60,13 +60,13 @@ export async function fetchSalesOverTime(days = 30) {
 
 // --- Products ---
 export async function fetchAllProducts() {
-  const { data, error } = await supabase.from('products').select('*, categories(name), product_images(url, is_primary)').order('created_at', { ascending: false });
+  const { data, error } = await supabase.from('products').select('*, categories(name, sold_by_inches), product_images(url, is_primary), product_variants(id, price, stock, option_name, option_value)').order('created_at', { ascending: false });
   if (error) throw error;
   return data;
 }
 
 export async function fetchProductForEdit(id) {
-  const { data, error } = await supabase.from('products').select('*, product_images(*), product_variants(*)').eq('id', id).single();
+  const { data, error } = await supabase.from('products').select('*, categories(name, sold_by_inches), product_images(*), product_variants(*)').order('sort_order').eq('id', id).single();
   if (error) throw error;
   return data;
 }
@@ -99,12 +99,68 @@ export async function saveProductImages(productId, images) {
   }
 }
 
+// Variants are matched on (option_name, option_value) and updated in place
+// rather than deleted and reinserted. The old version regenerated every
+// variant UUID on each save, which silently removed customers' cart lines
+// (CartContext drops a line whose variant no longer exists) and nulled
+// order_items.variant_id on historical orders. Lengths are also the identity
+// here: renaming one is a new length, not a replacement of the old one.
 export async function saveProductVariants(productId, variants) {
-  await supabase.from('product_variants').delete().eq('product_id', productId);
-  if (variants.length) {
-    const { error } = await supabase.from('product_variants').insert(variants.map((v) => ({ ...v, product_id: productId })));
-    if (error) throw error;
-  }
+  const { data: existing, error: loadErr } = await supabase
+    .from('product_variants')
+    .select('id, option_name, option_value')
+    .eq('product_id', productId);
+  if (loadErr) throw loadErr;
+
+  const kept = new Set();
+  const rows = [];
+
+  variants.forEach((v, index) => {
+    const optionName = v.option_name.trim();
+    const optionValue = v.option_value.trim();
+    const key = `${optionName}::${optionValue}`;
+    kept.add(key);
+
+    const previous = (existing || []).find(
+      (e) => `${e.option_name}::${e.option_value}` === key,
+    );
+
+    rows.push(
+      previous
+        ? supabase
+            .from('product_variants')
+            .update({
+              price: v.price === '' || v.price == null ? null : Number(v.price),
+              price_adjustment: Number(v.price_adjustment || 0),
+              stock: Number(v.stock || 0),
+              sort_order: index,
+            })
+            .eq('id', previous.id)
+        : supabase.from('product_variants').insert({
+            product_id: productId,
+            option_name: optionName,
+            option_value: optionValue,
+            price: v.price === '' || v.price == null ? null : Number(v.price),
+            price_adjustment: Number(v.price_adjustment || 0),
+            stock: Number(v.stock || 0),
+            sort_order: index,
+          }),
+    );
+  });
+
+  const removed = (existing || []).filter(
+    (e) => !kept.has(`${e.option_name}::${e.option_value}`),
+  );
+
+  const results = await Promise.all([
+    ...rows,
+    ...(removed.length
+      ? [supabase.from('product_variants').delete().in('id', removed.map((r) => r.id))]
+      : []),
+  ]);
+
+  const failure = results.find((r) => r.error);
+  if (failure) throw failure.error;
 }
 
 // File names are unique (timestamped), so browsers can cache them for a year.
@@ -229,7 +285,7 @@ export async function deleteReview(id) {
 export async function fetchInventory() {
   const [{ data: products }, { data: variants }] = await Promise.all([
     supabase.from('products').select('id, name, stock, is_active, allow_preorder').order('name'),
-    supabase.from('product_variants').select('id, product_id, option_name, option_value, stock, products(name)').order('option_name'),
+    supabase.from('product_variants').select('id, product_id, option_name, option_value, price, stock, sort_order, products(name)').order('sort_order'),
   ]);
   return { products: products || [], variants: variants || [] };
 }

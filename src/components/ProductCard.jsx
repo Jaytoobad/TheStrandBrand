@@ -4,6 +4,7 @@ import { THUMB_WIDTH, imageFallback, thumbUrl } from '../lib/imageUrl';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { addToWishlist, removeFromWishlist } from '../services/wishlist';
+import { displayPrice, isSoldByLength, isSoldOut, pricedVariants } from '../lib/pricing';
 import { useState } from 'react';
 
 export default function ProductCard({ product, isWishlisted = false }) {
@@ -13,8 +14,14 @@ export default function ProductCard({ product, isWishlisted = false }) {
   const [busy, setBusy] = useState(false);
 
   const image = product.product_images?.find((i) => i.is_primary)?.url || product.product_images?.[0]?.url || '/assets/placeholder-product.jpg';
-  const onSale = product.sale_price != null && product.sale_price < product.price;
-  const outOfStock = product.stock <= 0 && !product.allow_preorder;
+  const soldByLength = isSoldByLength(product);
+  // A length-priced product has no meaningful sale price: the product row's price
+  // is only a placeholder for the cheapest length, so a strikethrough would be
+  // meaningless and misleading.
+  const onSale = !soldByLength && product.sale_price != null && product.sale_price < product.price;
+  const outOfStock = isSoldOut(product) && !product.allow_preorder;
+  const lengths = soldByLength ? pricedVariants(product) : [];
+  const cheapest = displayPrice(product);
 
   async function toggleWishlist(e) {
     e.preventDefault();
@@ -64,8 +71,15 @@ export default function ProductCard({ product, isWishlisted = false }) {
         <h3 className="product-card-name">{product.name}</h3>
         <div className="product-card-price">
           {onSale && <span className="price-original">{formatMoney(product.price)}</span>}
-          <span className="price-current">{formatMoney(onSale ? product.sale_price : product.price)}</span>
+          <span className="price-current">
+            {soldByLength ? <span className="price-from">From {formatMoney(cheapest)}</span> : formatMoney(onSale ? product.sale_price : product.price)}
+          </span>
         </div>
+        {soldByLength && lengths.length > 0 && (
+          <p className="product-card-lengths">
+            {lengths.length} length{lengths.length === 1 ? '' : 's'} available
+          </p>
+        )}
       </div>
     </Link>
   );

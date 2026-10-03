@@ -196,7 +196,7 @@ const variantIds = [...new Set(items.map((i) => String(i.variantId ?? '')).filte
 
 const { data: productRows, error: productErr } = await supabase
   .from('products')
-  .select('id, name, price, sale_price, stock, is_active, allow_preorder')
+  .select('id, name, price, sale_price, stock, is_active, allow_preorder, categories(sold_by_inches)')
   .in('id', productIds);
 
 if (productErr) {
@@ -210,7 +210,7 @@ let variantsById = new Map();
 if (variantIds.length) {
   const { data: variantRows, error: variantErr } = await supabase
     .from('product_variants')
-    .select('id, product_id, option_name, option_value, price_adjustment, stock')
+    .select('id, product_id, option_name, option_value, price, price_adjustment, stock')
     .in('id', variantIds);
 
   if (variantErr) {
@@ -230,13 +230,31 @@ for (const item of items) {
   let availableStock = product.stock;
   let variantSummary = null;
 
+  // A product in a sold-by-length category has no single price. Paying without
+  // choosing a length would charge the placeholder price on the product row,
+  // which is the shortest length's price, so refuse it here with a clear
+  // message rather than letting the order line trigger reject it later.
+  if (product.categories?.sold_by_inches && !item.variantId) {
+    return json(
+      { error: `Please choose a length for ${product.name} before paying.` },
+      400,
+    );
+  }
+
   if (item.variantId) {
     const variant = variantsById.get(item.variantId);
     // The option must belong to this product, not just exist.
     if (!variant || variant.product_id !== product.id) {
       return json({ error: 'Selected option unavailable.' }, 400);
     }
-    unitPrice += Number(variant.price_adjustment);
+    // A length-priced option carries its own absolute price and completely
+    // replaces the product price. Everything else keeps the original
+    // base-plus-adjustment behaviour.
+    if (variant.price != null) {
+      unitPrice = Number(variant.price);
+    } else {
+      unitPrice += Number(variant.price_adjustment);
+    }
     availableStock = variant.stock;
     variantSummary = `${variant.option_name}: ${variant.option_value}`;
   }

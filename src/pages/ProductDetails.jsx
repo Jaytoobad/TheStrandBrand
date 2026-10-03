@@ -4,6 +4,7 @@ import { fetchProductBySlug, fetchApprovedReviews } from '../services/products';
 import { formatCategoryName, formatMoney } from '../config/siteConfig';
 import posthog, { canCapturePostHog } from '../lib/posthog';
 import { useCart } from '../context/CartContext';
+import { isSoldByLength, unitPriceFor, displayPrice } from '../lib/pricing';
 import DeliveryEstimate from '../components/DeliveryEstimate';
 import { useToast } from '../context/ToastContext';
 import PageLoader from '../components/PageLoader';
@@ -47,6 +48,25 @@ export default function ProductDetails() {
     }, {});
   }, [product]);
 
+  // Lengths must appear shortest-first, and other options in the order the
+  // merchant set. Without this the order came back however Postgres felt like
+  // returning it. Fall back to sorting numeric-looking values (10 before 22) for
+  // rows created before sort_order existed.
+  const orderedOptionGroups = useMemo(() => {
+    const entries = Object.entries(optionGroups).map(([name, options]) => {
+      const sorted = [...options].sort((a, b) => {
+        const order = Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0);
+        if (order !== 0) return order;
+        const aNum = Number.parseFloat(String(a.option_value).replace(/[^0-9.]/g, ''));
+        const bNum = Number.parseFloat(String(b.option_value).replace(/[^0-9.]/g, ''));
+        if (Number.isFinite(aNum) && Number.isFinite(bNum)) return aNum - bNum;
+        return String(a.option_value).localeCompare(String(b.option_value));
+      });
+      return [name, sorted];
+    });
+    return Object.fromEntries(entries);
+  }, [optionGroups]);
+
   const selectedVariant = useMemo(() => {
     if (!product?.product_variants?.length) return null;
     const names = Object.keys(optionGroups);
@@ -67,12 +87,17 @@ export default function ProductDetails() {
   }
 
   const images = product.product_images?.length ? [...product.product_images].sort((a, b) => a.sort_order - b.sort_order) : [{ url: '/assets/placeholder-product.jpg' }];
-  const onSale = product.sale_price != null && product.sale_price < product.price;
-  const basePrice = onSale ? product.sale_price : product.price;
-  const finalPrice = basePrice + (selectedVariant ? Number(selectedVariant.price_adjustment) : 0);
-  const requiresVariant = Object.keys(optionGroups).length > 0;
+  const soldByLength = isSoldByLength(product);
+  // A length-priced product's own price is only a placeholder for the cheapest
+  // length, so a "Sale" strike-through would compare a placeholder against a
+  // placeholder and say nothing useful about what the customer pays.
+  const onSale = !soldByLength && product.sale_price != null && product.sale_price < product.price;
+  const finalPrice = unitPriceFor(product, selectedVariant);
+  const requiresVariant = Object.keys(orderedOptionGroups).length > 0;
   const stock = selectedVariant ? selectedVariant.stock : product.stock;
   const outOfStock = stock <= 0 && !product.allow_preorder;
+  // Until a length is chosen, show the cheapest one rather than a bare number.
+  const showsFromPrice = soldByLength && !selectedVariant;
 
   function handleAddToCart() {
     if (requiresVariant && !selectedVariant) {
@@ -129,14 +154,19 @@ export default function ProductDetails() {
 
         <div className="product-card-price product-detail-price">
           {onSale && <span className="price-original">{formatMoney(product.price)}</span>}
-          <span className="price-current">{formatMoney(finalPrice)}</span>
+          <span className="price-current">
+            {showsFromPrice ? <span className="price-from">From {formatMoney(displayPrice(product))}</span> : formatMoney(finalPrice)}
+          </span>
         </div>
+        {soldByLength && !selectedVariant && (
+          <p className="product-length-hint">Price and stock depend on the length. Choose one to see the exact price.</p>
+        )}
 
         <DeliveryEstimate />
 
         {product.description && <p className="product-description">{product.description}</p>}
 
-        {Object.entries(optionGroups).map(([name, options]) => (
+        {Object.entries(orderedOptionGroups).map(([name, options]) => (
           <div key={name} className="option-group">
             <h4>{name}</h4>
             <div className="option-pills">

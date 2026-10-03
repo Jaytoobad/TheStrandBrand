@@ -465,6 +465,10 @@ html, body { overflow-x: hidden; }
 .product-card-price { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; margin-top: auto; }
 .price-original { text-decoration: line-through; color: var(--color-text-muted); font-size: 0.78rem; order: 2; }
 .price-current { font-weight: 700; color: var(--color-black); font-size: 1rem; order: 1; }
+/* Length-priced products show the cheapest length rather than one number. */
+.price-from { font-weight: 400; color: var(--color-text-muted); font-size: 0.82rem; }
+.product-card-lengths { margin: 2px 0 0; color: var(--color-text-muted); font-size: 0.76rem; }
+.product-length-hint { margin: 6px 0 0; color: var(--color-text-muted); font-size: 0.85rem; }
 
 /* ============================= FOOTER ============================= */
 .site-footer { background: var(--color-wine); color: var(--color-black); margin-top: 0px; padding: 60px 0 0; } 

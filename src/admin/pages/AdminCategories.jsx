@@ -5,7 +5,7 @@ import { compressImage } from '../../lib/imageCompression';
 import PageLoader from '../../components/PageLoader';
 import { formatCategoryName } from '../../config/siteConfig';
 
-const empty = { name: '', slug: '', description: '', image_url: '', sort_order: 0, is_active: true };
+const empty = { name: '', slug: '', description: '', image_url: '', sort_order: 0, is_active: true, sold_by_inches: false };
 
 function slugify(str) { return str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
 
@@ -58,7 +58,7 @@ export default function AdminCategories() {
     e.preventDefault();
     if (imageBroken) { showToast('The image link does not load. Fix it, upload an image, or clear the field.', 'error'); return; }
     try {
-      await saveCategory({ ...editing, image_url: imageUrl || null, slug: slugify(editing.name) }, editing.id);
+      await saveCategory({ ...editing, sold_by_inches: Boolean(editing.sold_by_inches), image_url: imageUrl || null, slug: slugify(editing.name) }, editing.id);
       showToast('Category saved');
       setEditing(null);
       load();
@@ -87,13 +87,14 @@ export default function AdminCategories() {
 
       <div className="data-table-wrap">
         <table className="data-table is-stacked">
-          <thead><tr><th>Name</th><th>Description</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Description</th><th>Status</th><th>Type</th><th>Actions</th></tr></thead>
           <tbody>
             {categories.map((c) => (
               <tr key={c.id}>
                 <td className="cell-primary">{formatCategoryName(c.name)}</td>
                 <td data-label="Description" className="cell-wide">{c.description || '—'}</td>
                 <td data-label="Status"><span className={`admin-pill ${c.is_active ? 'is-good' : 'is-neutral'}`}>{c.is_active ? 'Active' : 'Hidden'}</span></td>
+                <td data-label="Type">{c.sold_by_inches ? <span className="admin-pill is-good">By length</span> : <span className="cell-muted">Standard</span>}</td>
                 <td className="table-actions">
                   <button className="btn btn-sm btn-outline" onClick={() => setEditing(c)}>Edit</button>
                   <button className="btn btn-sm btn-outline" onClick={() => toggleActive(c)}>{c.is_active ? 'Deactivate' : 'Activate'}</button>
@@ -148,6 +149,21 @@ export default function AdminCategories() {
           </div>
 
           <div className="form-group"><label htmlFor="category-sort">Sort Order</label><input id="category-sort" type="number" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} /></div>
+
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={Boolean(editing.sold_by_inches)}
+              onChange={(e) => setEditing({ ...editing, sold_by_inches: e.target.checked })}
+            />
+            Sold strictly by length (inches)
+          </label>
+          <p className="form-hint">
+            Products in this category are priced and stocked per length instead of at one price. The
+            product form then asks for a price and stock for each length, customers must pick a length
+            before paying, and shop cards show &ldquo;from&rdquo; the cheapest length. Leave this off for
+            every other category — those keep their single price and &ldquo;price +/&minus;&rdquo; options.
+          </p>
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="button" className="btn btn-outline" onClick={() => setEditing(null)}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={uploading}>Save</button>

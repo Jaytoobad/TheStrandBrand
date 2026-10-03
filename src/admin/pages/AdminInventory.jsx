@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchInventory, updateProductStock, updateVariantStock } from '../../services/admin';
 import { useToast } from '../../context/ToastContext';
+import { formatMoney } from '../../config/siteConfig';
 import PageLoader from '../../components/PageLoader';
 
 export default function AdminInventory() {
@@ -49,12 +50,15 @@ export default function AdminInventory() {
       <h3 className="admin-table-title">Variants</h3>
       <div className="data-table-wrap">
         <table className="data-table is-stacked">
-          <thead><tr><th>Product</th><th>Option</th><th>Stock</th></tr></thead>
+          <thead><tr><th>Product</th><th>Option</th><th>Price</th><th>Stock</th></tr></thead>
           <tbody>
             {data.variants.map((v) => (
               <tr key={v.id}>
                 <td className="cell-primary">{v.products?.name}</td>
                 <td data-label="Option">{v.option_name}: {v.option_value}</td>
+                <td data-label="Price">
+                  {v.price != null ? formatMoney(v.price) : <span className="cell-muted">—</span>}
+                </td>
                 <td data-label="Stock"><input className="stock-input" type="number" min="0" inputMode="numeric" aria-label={`Stock for ${v.products?.name} ${v.option_value}`} defaultValue={v.stock} key={v.stock} onBlur={(e) => handleVariantStock(v, e.target.value)} /></td>
               </tr>
             ))}
