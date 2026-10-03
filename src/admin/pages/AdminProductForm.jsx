@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   fetchProductForEdit, saveProduct, saveProductImages, saveProductVariants,
   uploadProductImage, fetchAllCategories,
 } from '../../services/admin';
 import { useToast } from '../../context/ToastContext';
- import { compressImage } from '../../lib/imageCompression';
+import { formatMoney } from '../../config/siteConfig';
+import { compressImage } from '../../lib/imageCompression';
 import PageLoader from '../../components/PageLoader';
 
 function slugify(str) {
@@ -58,6 +59,55 @@ export default function AdminProductForm() {
   }
 
   const inchRows = soldByInches ? sortedInchRows(variants) : [];
+
+  // One place that decides whether the length table is valid, so the sidebar
+  // summary and the save button can never disagree with what submit will do.
+  // Each problem carries the index of the offending row so the form can point at it.
+  const lengthCheck = useMemo(() => {
+    const rows = soldByInches ? sortedInchRows(variants) : [];
+    const problems = [];
+    const seen = new Map();
+
+    rows.forEach((row) => {
+      const index = variants.indexOf(row);
+      const parsed = parseInches(row.inches);
+      if (!parsed) {
+        problems.push({ index, message: 'needs a number of inches, for example 14 or 14"' });
+      } else if (seen.has(parsed)) {
+        problems.push({ index, message: `duplicates the ${parsed}" length` });
+      } else {
+        seen.set(parsed, index);
+      }
+
+      if (!(Number(row.price) > 0)) {
+        problems.push({ index, message: `${parsed ? `${parsed}"` : 'this length'} needs a price` });
+      }
+      if (Number(row.stock) < 0) {
+        problems.push({ index, message: `${parsed ? `${parsed}"` : 'this length'} cannot have negative stock` });
+      }
+    });
+
+    if (soldByInches && !rows.length) {
+      problems.push({ index: -1, message: 'add at least one length with a price and stock' });
+    }
+
+    const prices = rows.map((r) => Number(r.price)).filter((n) => Number.isFinite(n) && n > 0);
+    return {
+      rows,
+      problems,
+      ok: problems.length === 0,
+      count: rows.length,
+      min: prices.length ? Math.min(...prices) : null,
+      max: prices.length ? Math.max(...prices) : null,
+      units: rows.reduce((sum, r) => sum + (Number(r.stock) || 0), 0),
+    };
+  }, [soldByInches, variants]);
+
+  // The rows that are wrong, so the table and the summary can flag the same ones.
+  const problemIndexes = useMemo(
+    () => new Set(lengthCheck.problems.map((p) => p.index)),
+    [lengthCheck.problems],
+  );
 
   useEffect(() => {
     fetchAllCategories().then(setCategories);
@@ -112,7 +162,27 @@ export default function AdminProductForm() {
   }
 
   function removeImage(idx) {
-    setImages((prev) => prev.filter((_, i) => i !== idx));
+    setImages((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      // The storefront falls back to the first image, so never leave none marked
+      // primary while images remain.
+      if (next.length && !next.some((im) => im.is_primary)) next[0] = { ...next[0], is_primary: true };
+      return next;
+    });
+  }
+
+  function makePrimary(idx) {
+    setImages((prev) => prev.map((im, i) => ({ ...im, is_primary: i === idx })));
+  }
+
+  function moveImage(idx, dir) {
+    setImages((prev) => {
+      const target = idx + dir;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
   }
 
   function addVariantRow() {
@@ -145,36 +215,21 @@ export default function AdminProductForm() {
     if (!form.name) { showToast('Name is required.', 'error'); return; }
 
     let lengths = [];
+    // products.price is NOT NULL and is what price sorting and any "from"
+    // display fall back to, so for a sold-by-length product it tracks the
+    // cheapest length. Computed rather than assigned into form state.
+    let productPrice = Number(form.price);
+
     if (soldByInches) {
-      // Normalise and order before validating, so the error messages refer to the
-      // same order the merchant sees above.
-      lengths = sortedInchRows(variants);
-
-      const seen = new Set();
-      for (const row of lengths) {
-        const parsed = parseInches(row.inches);
-        if (!parsed) { showToast('Every length needs a number of inches, for example 14 or 14".', 'error'); return; }
-        if (seen.has(parsed)) { showToast(`The ${parsed}" length is listed twice.`, 'error'); return; }
-        seen.add(parsed);
-        if (row.price === '' || row.price == null || Number(row.price) <= 0) {
-          showToast(`Give the ${parsed}" length a price.`, 'error');
-          return;
-        }
-        if (Number(row.stock) < 0) { showToast(`Stock for ${parsed}" cannot be negative.`, 'error'); return; }
-      }
-
-      if (!lengths.length) {
-        showToast('Add at least one length with a price and stock.', 'error');
+      if (!lengthCheck.ok) {
+        showToast(`Lengths: ${lengthCheck.problems[0].message}.`, 'error');
         return;
       }
-
-      // products.price is NOT NULL and is what price sorting and any "from"
-      // display fall back to, so it tracks the shortest length.
-      const cheapest = Math.min(...lengths.map((r) => Number(r.price)));
-      form.price = String(cheapest);
+      lengths = lengthCheck.rows;
+      productPrice = lengthCheck.min;
     }
 
-    if (!form.price) { showToast('Price is required.', 'error'); return; }
+    if (!(productPrice > 0)) { showToast('Price is required.', 'error'); return; }
 
     setSaving(true);
     try {
@@ -183,7 +238,7 @@ export default function AdminProductForm() {
         slug: slugify(form.name),
         description: form.description,
         category_id: form.category_id || null,
-        price: Number(form.price),
+        price: productPrice,
         sale_price: form.sale_price ? Number(form.sale_price) : null,
         // Real stock lives on each length, so the product row carries none.
         // Preorder stays available so a length can be made to order.
@@ -220,143 +275,244 @@ export default function AdminProductForm() {
 
   if (loading) return <PageLoader />;
 
+  const categoryName = categories.find((c) => c.id === form.category_id)?.name;
+  const summaryPrice = soldByInches
+    ? (lengthCheck.min != null && lengthCheck.max != null
+      ? (lengthCheck.min === lengthCheck.max ? formatMoney(lengthCheck.min) : `${formatMoney(lengthCheck.min)} – ${formatMoney(lengthCheck.max)}`)
+      : '—')
+    : (form.price ? formatMoney(Number(form.price)) : '—');
+
   return (
     <div>
-      <div className="admin-header"><h1>{isEdit ? 'Edit Product' : 'Add Product'}</h1></div>
+      <div className="admin-header">
+        <h1>{isEdit ? 'Edit Product' : 'Add Product'}</h1>
+        {isEdit && <p className="admin-header-sub">Changes are not live until you save.</p>}
+      </div>
 
-      <form className="admin-form" onSubmit={handleSubmit}>
-        <div className="admin-form-section">
-          <h3>Basic Information</h3>
-          <div className="form-group"><label>Product Name</label><input required value={form.name} onChange={(e) => updateField('name', e.target.value)} /></div>
-          <div className="form-group"><label>Description</label><textarea rows={4} value={form.description} onChange={(e) => updateField('description', e.target.value)} /></div>
-          <div className="form-group">
-            <label>Category</label>
-            <select value={form.category_id} onChange={(e) => updateField('category_id', e.target.value)}>
-              <option value="">No category</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-        </div>
-
-        <div className="admin-form-section">
-          <h3>Pricing &amp; Stock</h3>
-          {soldByInches ? (
-            <>
-              <p className="form-hint">
-                This category is sold by length, so each length below carries its own price and stock.
-                The product&rsquo;s own price is set automatically to the shortest length, which is what
-                shop listings and price sorting use.
-              </p>
-              <label className="checkbox-row">
-                <input type="checkbox" checked={form.allow_preorder} onChange={(e) => updateField('allow_preorder', e.target.checked)} />
-                Allow made-to-order for any length that is out of stock
-              </label>
-            </>
-          ) : (
-            <>
-              <div className="form-row">
-                <div className="form-group"><label>Price (GH₵)</label><input required type="number" min="0" step="0.01" value={form.price} onChange={(e) => updateField('price', e.target.value)} /></div>
-                <div className="form-group"><label>Sale Price (optional)</label><input type="number" min="0" step="0.01" value={form.sale_price} onChange={(e) => updateField('sale_price', e.target.value)} /></div>
-              </div>
-              <div className="form-group"><label>Base Stock</label><input type="number" min="0" value={form.stock} onChange={(e) => updateField('stock', e.target.value)} /></div>
-              <label className="checkbox-row"><input type="checkbox" checked={form.allow_preorder} onChange={(e) => updateField('allow_preorder', e.target.checked)} /> Allow preorders when stock is unavailable</label>
-            </>
-          )}
-          <label className="checkbox-row"><input type="checkbox" checked={form.is_new_arrival} onChange={(e) => updateField('is_new_arrival', e.target.checked)} /> New Arrival</label>
-          <label className="checkbox-row"><input type="checkbox" checked={form.is_featured} onChange={(e) => updateField('is_featured', e.target.checked)} /> Featured / Best Seller</label>
-          <label className="checkbox-row"><input type="checkbox" checked={form.is_active} onChange={(e) => updateField('is_active', e.target.checked)} /> Active (visible on storefront)</label>
-        </div>
-
-        <div className="admin-form-section">
-          <h3>Product Images</h3>
-          <div className="image-list">
-            {images.map((img, i) => (
-              <div key={i} className="image-list-item">
-                <img src={img.url} alt="" />
-                <button type="button" onClick={() => removeImage(i)}>×</button>
-              </div>
-            ))}
-          </div>
-          <input type="file" accept="image/*" multiple onChange={handleImageUpload} disabled={uploading} />
-          {uploading && <p style={{ fontSize: '0.8rem', marginTop: 6 }}>Uploading…</p>}
-        </div>
-
-        {soldByInches ? (
-          <div className="admin-form-section">
-            <h3>Lengths (inches)</h3>
-            <p className="form-hint">
-              Every length you sell, shortest first. Customers pick one on the product page and are
-              charged that length&rsquo;s price.
-            </p>
-            <div className="data-table-wrap">
-              <table className="data-table is-stacked">
-                <thead>
-                  <tr><th>Length (inches)</th><th>Price (GH₵)</th><th>Stock</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                  {inchRows.map((row) => {
-                    const originalIndex = variants.indexOf(row);
-                    return (
-                      <tr key={row.id || `${row.inches}-${originalIndex}`}>
-                        <td data-label="Length (inches)">
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            placeholder='e.g. 18 or 18"'
-                            value={row.inches ?? ''}
-                            onChange={(e) => updateInch(originalIndex, 'inches', e.target.value)}
-                            aria-label="Length in inches"
-                          />
-                        </td>
-                        <td data-label="Price (GH₵)">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                            value={row.price ?? ''}
-                            onChange={(e) => updateInch(originalIndex, 'price', e.target.value)}
-                            aria-label={`Price for ${row.inches || 'this length'}`}
-                          />
-                        </td>
-                        <td data-label="Stock">
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={row.stock ?? 0}
-                            onChange={(e) => updateInch(originalIndex, 'stock', e.target.value)}
-                            aria-label={`Stock for ${row.inches || 'this length'}`}
-                          />
-                        </td>
-                        <td className="table-actions">
-                          <button type="button" className="btn btn-sm btn-outline" onClick={() => removeVariant(originalIndex)}>Remove</button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+      <form className="admin-form-layout" onSubmit={handleSubmit}>
+        <div className="admin-form-main">
+          <section className="admin-form-section">
+            <h3>Basics</h3>
+            <div className="form-group">
+              <label>Product Name</label>
+              <input required value={form.name} onChange={(e) => updateField('name', e.target.value)} />
             </div>
-            <button type="button" className="btn btn-sm btn-outline" onClick={addInchRow}>+ Add length</button>
-          </div>
-        ) : (
-          <div className="admin-form-section">
-            <h3>Variants (Length, Color, etc.)</h3>
-            {variants.map((v, i) => (
-              <div key={i} className="variant-row">
-                <input placeholder="Option name (e.g. Length)" value={v.option_name} onChange={(e) => updateVariant(i, 'option_name', e.target.value)} />
-                <input placeholder="Value (e.g. 20&quot;)" value={v.option_value} onChange={(e) => updateVariant(i, 'option_value', e.target.value)} />
-                <input placeholder="Price +/-" type="number" step="0.01" value={v.price_adjustment} onChange={(e) => updateVariant(i, 'price_adjustment', e.target.value)} />
-                <input placeholder="Stock" type="number" value={v.stock} onChange={(e) => updateVariant(i, 'stock', e.target.value)} />
-                <button type="button" className="btn btn-sm btn-outline" onClick={() => removeVariant(i)}>Remove</button>
-              </div>
-            ))}
-            <button type="button" className="btn btn-sm btn-outline" onClick={addVariantRow}>+ Add Variant Option</button>
-          </div>
-        )}
+            <div className="form-group">
+              <label>Category</label>
+              <select value={form.category_id} onChange={(e) => updateField('category_id', e.target.value)}>
+                <option value="">No category</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              {soldByInches && (
+                <p className="form-hint form-hint-strong">
+                  {categoryName} is sold by length, so pricing and stock are set per length below.
+                </p>
+              )}
+            </div>
+            <div className="form-group">
+              <label>Description</label>
+              <textarea rows={5} value={form.description} onChange={(e) => updateField('description', e.target.value)} />
+            </div>
+          </section>
 
-        <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save Product'}</button>
+          <section className="admin-form-section">
+            <h3>Images</h3>
+            <p className="form-hint form-hint-lead">The first image is the one shown in listings. Drag order is set with the arrows.</p>
+            <div className="image-list">
+              {images.map((img, i) => (
+                <div key={i} className={img.is_primary ? 'image-list-item is-primary' : 'image-list-item'}>
+                  <img src={img.url} alt="" />
+                  {img.is_primary && <span className="image-list-badge">Main</span>}
+                  <button type="button" onClick={() => removeImage(i)} aria-label={`Remove image ${i + 1}`}>&times;</button>
+                  <div className="image-list-tools">
+                    <button type="button" onClick={() => moveImage(i, -1)} disabled={i === 0} aria-label={`Move image ${i + 1} earlier`}>&larr;</button>
+                    <button type="button" onClick={() => moveImage(i, 1)} disabled={i === images.length - 1} aria-label={`Move image ${i + 1} later`}>&rarr;</button>
+                    {!img.is_primary && <button type="button" onClick={() => makePrimary(i)}>Main</button>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <input type="file" accept="image/*" multiple onChange={handleImageUpload} disabled={uploading} />
+            {uploading && <p className="form-hint">Uploading…</p>}
+            {images.length === 0 && <p className="form-hint">No images yet. A product needs at least one to look right in listings.</p>}
+          </section>
+
+          <section className="admin-form-section">
+            <h3>{soldByInches ? 'Lengths, pricing & stock' : 'Pricing & stock'}</h3>
+
+            {soldByInches ? (
+              <>
+                <p className="form-hint form-hint-lead">
+                  Every length you sell, shortest first. Customers choose one on the product page and are
+                  charged that length&rsquo;s price. The product&rsquo;s own price follows your cheapest
+                  length automatically.
+                </p>
+                <div className="data-table-wrap">
+                  <table className="data-table is-stacked length-table">
+                    <thead>
+                      <tr><th>Length (inches)</th><th>Price (GH₵)</th><th>Stock</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                      {inchRows.map((row) => {
+                        const originalIndex = variants.indexOf(row);
+                        const bad = problemIndexes.has(originalIndex);
+                        return (
+                          <tr key={row.id || `${row.inches}-${originalIndex}`} className={bad ? 'row-problem' : undefined}>
+                            <td data-label="Length (inches)">
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder='e.g. 18 or 18"'
+                                value={row.inches ?? ''}
+                                onChange={(e) => updateInch(originalIndex, 'inches', e.target.value)}
+                                aria-label="Length in inches"
+                                aria-invalid={bad || undefined}
+                              />
+                            </td>
+                            <td data-label="Price (GH₵)">
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={row.price ?? ''}
+                                onChange={(e) => updateInch(originalIndex, 'price', e.target.value)}
+                                aria-label={`Price for ${row.inches || 'this length'}`}
+                                aria-invalid={bad || undefined}
+                              />
+                            </td>
+                            <td data-label="Stock">
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={row.stock ?? 0}
+                                onChange={(e) => updateInch(originalIndex, 'stock', e.target.value)}
+                                aria-label={`Stock for ${row.inches || 'this length'}`}
+                                aria-invalid={bad || undefined}
+                              />
+                            </td>
+                            <td className="table-actions">
+                              <button type="button" className="btn btn-sm btn-outline" onClick={() => removeVariant(originalIndex)}>Remove</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    {lengthCheck.count > 0 && (
+                      <tfoot>
+                        <tr>
+                          <td data-label="Totals">{lengthCheck.count} length{lengthCheck.count === 1 ? '' : 's'}</td>
+                          <td data-label="Price span">{summaryPrice}</td>
+                          <td data-label="Total stock">{lengthCheck.units}</td>
+                          <td />
+                        </tr>
+                      </tfoot>
+                    )}
+                  </table>
+                </div>
+                <button type="button" className="btn btn-sm btn-outline" onClick={addInchRow}>+ Add length</button>
+              </>
+            ) : (
+              <>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Price (GH₵)</label>
+                    <input required type="number" min="0" step="0.01" value={form.price} onChange={(e) => updateField('price', e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label>Sale Price (optional)</label>
+                    <input type="number" min="0" step="0.01" value={form.sale_price} onChange={(e) => updateField('sale_price', e.target.value)} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Base Stock</label>
+                  <input type="number" min="0" value={form.stock} onChange={(e) => updateField('stock', e.target.value)} />
+                </div>
+              </>
+            )}
+          </section>
+
+          {!soldByInches && (
+            <section className="admin-form-section">
+              <h3>Variants (Length, Color, etc.)</h3>
+              <p className="form-hint form-hint-lead">Options add or subtract from the base price above.</p>
+              {variants.map((v, i) => (
+                <div key={i} className="variant-row">
+                  <input placeholder="Option name (e.g. Length)" value={v.option_name} onChange={(e) => updateVariant(i, 'option_name', e.target.value)} />
+                  <input placeholder="Value (e.g. 20&quot;)" value={v.option_value} onChange={(e) => updateVariant(i, 'option_value', e.target.value)} />
+                  <input placeholder="Price +/-" type="number" step="0.01" value={v.price_adjustment} onChange={(e) => updateVariant(i, 'price_adjustment', e.target.value)} />
+                  <input placeholder="Stock" type="number" value={v.stock} onChange={(e) => updateVariant(i, 'stock', e.target.value)} />
+                  <button type="button" className="btn btn-sm btn-outline" onClick={() => removeVariant(i)}>Remove</button>
+                </div>
+              ))}
+              <button type="button" className="btn btn-sm btn-outline" onClick={addVariantRow}>+ Add Variant Option</button>
+            </section>
+          )}
+        </div>
+
+        <aside className="admin-form-side">
+          <div className="admin-side-card">
+            <h3>Summary</h3>
+            <dl className="summary-list">
+              <div className="summary-row">
+                <dt>Category</dt>
+                <dd>{categoryName || 'Uncategorised'}</dd>
+              </div>
+              <div className="summary-row">
+                <dt>{soldByInches ? 'Price span' : 'Price'}</dt>
+                <dd>{summaryPrice}</dd>
+              </div>
+              <div className="summary-row">
+                <dt>{soldByInches ? 'Lengths' : 'Stock'}</dt>
+                <dd>{soldByInches ? lengthCheck.count : (form.stock ?? 0)}</dd>
+              </div>
+              {soldByInches && (
+                <div className="summary-row">
+                  <dt>Total units</dt>
+                  <dd>{lengthCheck.units}</dd>
+                </div>
+              )}
+            </dl>
+            {soldByInches && !lengthCheck.ok && (
+              <ul className="summary-problems">
+                {lengthCheck.problems.map((p, i) => (
+                  <li key={`${p.index}-${i}`}>{p.message}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="admin-side-card">
+            <h3>Visibility</h3>
+            <label className="checkbox-row">
+              <input type="checkbox" checked={form.is_active} onChange={(e) => updateField('is_active', e.target.checked)} />
+              Active (visible on storefront)
+            </label>
+            <label className="checkbox-row">
+              <input type="checkbox" checked={form.is_featured} onChange={(e) => updateField('is_featured', e.target.checked)} />
+              Featured / Best Seller
+            </label>
+            <label className="checkbox-row">
+              <input type="checkbox" checked={form.is_new_arrival} onChange={(e) => updateField('is_new_arrival', e.target.checked)} />
+              New Arrival
+            </label>
+            <label className="checkbox-row">
+              <input type="checkbox" checked={form.allow_preorder} onChange={(e) => updateField('allow_preorder', e.target.checked)} />
+              Allow made-to-order
+            </label>
+            <p className="form-hint">
+              Made-to-order lets customers buy a length that is out of stock or at zero stock.
+            </p>
+          </div>
+
+          <div className="admin-form-actions">
+            <button type="submit" className="btn btn-primary btn-block" disabled={saving || (soldByInches && !lengthCheck.ok)}>
+              {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Create product'}
+            </button>
+            <Link to="/admin/products" className="btn btn-outline btn-block">Cancel</Link>
+          </div>
+        </aside>
       </form>
     </div>
   );

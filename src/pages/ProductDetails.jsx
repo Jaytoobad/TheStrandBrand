@@ -167,7 +167,10 @@ export default function ProductDetails() {
         {product.description && <p className="product-description">{product.description}</p>}
 
         {Object.entries(orderedOptionGroups).map(([name, options]) =>
-          soldByLength ? (
+          // Rows are the length picker. Any other option group (a category that
+          // is not sold by length) keeps pills, and a length label is never
+          // invented for a value like "1B" that is not a measurement.
+          soldByLength && /length/i.test(name) ? (
             <div key={name} className="option-group length-group">
               <h4 id={`length-group-${name}`}>{name}</h4>
               <div className="length-list" role="radiogroup" aria-labelledby={`length-group-${name}`}>
