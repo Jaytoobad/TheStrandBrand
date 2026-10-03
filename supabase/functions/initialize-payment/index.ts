@@ -33,18 +33,38 @@ const corsHeaders = {
 
 // Where Paystack sends the customer after paying. Without a callback_url,
 // Paystack's hosted page just says "payment successful" and leaves them there.
-// Only our own site origins are accepted so the redirect can't be pointed elsewhere.
+//
+// The callback carries ?reference=<paystack reference>, so it is pinned to our
+// own configured site URL. This previously also accepted any *.vercel.app
+// origin, which meant anyone could deploy a page there, send that Origin, and
+// have Paystack redirect the payer to a site they control along with the
+// order number and payment reference. Preview deployments do not need a
+// callback of their own — falling back to the production URL is the correct
+// behaviour for them. Loopback stays allowed for local development over http.
 function resolveCallbackBase(req: Request): string | null {
   const configured = Deno.env.get('PUBLIC_SITE_URL')?.replace(/\/$/, '');
+  if (configured && !configured.includes('example')) {
+    try {
+      // The configured site is the single trust anchor. Validate it once so a
+      // misconfigured secret cannot silently become a phishing target.
+      const { protocol, hostname } = new URL(configured);
+      if (protocol === 'https:' && !/^(localhost|127\.0\.0\.1)$/.test(hostname)) {
+        return configured;
+      }
+    } catch {
+      // Fall through to the Origin-based development paths below.
+    }
+  }
+
   const origin = req.headers.get('origin')?.replace(/\/$/, '');
   if (origin) {
     try {
       const { protocol, hostname } = new URL(origin);
-      const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
-      const isVercel = protocol === 'https:' && hostname.endsWith('.vercel.app');
-      if (origin === configured || isLocal || isVercel) return origin;
+      const isLocal =
+        protocol === 'http:' && (hostname === 'localhost' || hostname === '127.0.0.1');
+      if (isLocal) return origin;
     } catch {
-      // Malformed Origin header — fall through to the configured site URL.
+      // Malformed Origin header — no callback URL at all.
     }
   }
   return configured && !configured.includes('example') ? configured : null;
@@ -163,44 +183,70 @@ Deno.serve(async (req) => {
       }, 409);
     }
 
-    // --- Re-price everything from the database. Never trust client prices. ---
-    let subtotal = 0;
-    const lineItems = [];
+// --- Re-price everything from the database. Never trust client prices. ---
+// Products and variants are fetched in one query each rather than per cart
+// item. The old loop awaited a row per item (and another per option), so a
+// four-item cart cost eight sequential round trips before the customer could
+// reach Paystack — seconds of dead time on a Ghanaian mobile connection.
+let subtotal = 0;
+const lineItems = [];
 
-    for (const item of items) {
-      const { data: product, error } = await supabase
-        .from('products')
-        .select('id, name, price, sale_price, stock, is_active, allow_preorder')
-        .eq('id', item.productId)
-        .single();
+const productIds = [...new Set(items.map((i) => String(i.productId ?? '')).filter(Boolean))];
+const variantIds = [...new Set(items.map((i) => String(i.variantId ?? '')).filter(Boolean))];
 
-      if (error || !product || !product.is_active) {
-        return json({ error: `Product unavailable: ${item.productId}` }, 400);
-      }
+const { data: productRows, error: productErr } = await supabase
+  .from('products')
+  .select('id, name, price, sale_price, stock, is_active, allow_preorder')
+  .in('id', productIds);
 
-      let unitPrice = product.sale_price ?? product.price;
-      let availableStock = product.stock;
-      let variantSummary = null;
+if (productErr) {
+  console.error('Product lookup failed:', productErr);
+  return json({ error: 'Could not start payment. Please try again.' }, 502);
+}
 
-      if (item.variantId) {
-        const { data: variant, error: vErr } = await supabase
-          .from('product_variants')
-          .select('id, option_name, option_value, price_adjustment, stock')
-          .eq('id', item.variantId)
-          .eq('product_id', product.id) // the option must belong to this product
-          .single();
-        if (vErr || !variant) return json({ error: 'Selected option unavailable.' }, 400);
-        unitPrice += Number(variant.price_adjustment);
-        availableStock = variant.stock;
-        variantSummary = `${variant.option_name}: ${variant.option_value}`;
-      }
+const productsById = new Map((productRows || []).map((p) => [p.id, p]));
 
-      if (!Number.isInteger(item.quantity) || item.quantity < 1 || (!product.allow_preorder && item.quantity > availableStock)) {
-        return json({ error: `Not enough stock for ${product.name}.` }, 400);
-      }
+let variantsById = new Map();
+if (variantIds.length) {
+  const { data: variantRows, error: variantErr } = await supabase
+    .from('product_variants')
+    .select('id, product_id, option_name, option_value, price_adjustment, stock')
+    .in('id', variantIds);
 
-      const lineSubtotal = unitPrice * item.quantity;
-      subtotal += lineSubtotal;
+  if (variantErr) {
+    console.error('Variant lookup failed:', variantErr);
+    return json({ error: 'Could not start payment. Please try again.' }, 502);
+  }
+  variantsById = new Map((variantRows || []).map((v) => [v.id, v]));
+}
+
+for (const item of items) {
+  const product = productsById.get(item.productId);
+  if (!product || !product.is_active) {
+    return json({ error: `Product unavailable: ${item.productId}` }, 400);
+  }
+
+  let unitPrice = product.sale_price ?? product.price;
+  let availableStock = product.stock;
+  let variantSummary = null;
+
+  if (item.variantId) {
+    const variant = variantsById.get(item.variantId);
+    // The option must belong to this product, not just exist.
+    if (!variant || variant.product_id !== product.id) {
+      return json({ error: 'Selected option unavailable.' }, 400);
+    }
+    unitPrice += Number(variant.price_adjustment);
+    availableStock = variant.stock;
+    variantSummary = `${variant.option_name}: ${variant.option_value}`;
+  }
+
+  if (!Number.isInteger(item.quantity) || item.quantity < 1 || (!product.allow_preorder && item.quantity > availableStock)) {
+    return json({ error: `Not enough stock for ${product.name}.` }, 400);
+  }
+
+  const lineSubtotal = unitPrice * item.quantity;
+  subtotal += lineSubtotal;
 
       lineItems.push({
         product_id: product.id,
