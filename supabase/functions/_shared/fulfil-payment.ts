@@ -12,6 +12,18 @@ import { sendOrderNotifications } from './order-notifications.ts';
 const PAYSTACK_SECRET_KEY = Deno.env.get('PAYSTACK_SECRET_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+// Every failure path below sets `retryable`, which is how callers decide whether
+// to hand the event back to Paystack or stop. It used to be inferred by matching
+// the human-readable `error` string, which meant a reworded message silently
+// turned a permanent failure into an endless retry loop — and left
+// 'Payment reference not found.' out of the permanent list entirely, so an
+// unresolvable reference was retried forever. Callers must branch on this flag,
+// never on the text.
+//
+//   retryable: true  — transient; Paystack should redeliver the event.
+//   retryable: false — final; retrying cannot change the outcome.
+export type FulfilFailure = { error: string; retryable: boolean; orderId?: string | null };
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
 export async function verifyAndFulfil(reference: string) {
@@ -21,7 +33,7 @@ export async function verifyAndFulfil(reference: string) {
     .eq('reference', reference)
     .single();
 
-  if (!payment) return { error: 'Payment reference not found.' };
+  if (!payment) return { error: 'Payment reference not found.', retryable: false, orderId: null };
 
   // Idempotency guard: if we've already processed this as successful, don't redo it.
   if (payment.status === 'success' && payment.orders.payment_status === 'paid') {
@@ -58,6 +70,10 @@ export async function verifyAndFulfil(reference: string) {
       error: finalFailure
         ? 'Payment was not successful.'
         : 'Your payment is still being processed. If you approved it, your order will update in a few minutes.',
+      // A final provider answer is permanent. Anything else is an approval we
+      // are still waiting on (Mobile Money), so the webhook must come back.
+      retryable: !finalFailure,
+      orderId: payment.order_id,
     };
   }
 
@@ -75,7 +91,7 @@ export async function verifyAndFulfil(reference: string) {
         ...sessionProperties,
       });
     }
-    return { error: 'Payment amount could not be verified.' };
+    return { error: 'Payment amount could not be verified.', retryable: false, orderId: payment.order_id };
   }
 
   await supabase

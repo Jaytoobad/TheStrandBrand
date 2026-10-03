@@ -1,5 +1,5 @@
 // ============================================================================
-// Build the WhatsApp / Instagram link-preview image (public/assets/og-image.png)
+// Build the WhatsApp / Instagram link-preview image (public/assets/og-image.jpg)
 // ============================================================================
 // The preview image is what people see when the store link is shared, so it
 // carries the slogan on top of the hero photo with a dark scrim that keeps the
@@ -18,7 +18,7 @@
 //   node scripts/make-og-image.mjs --script-font C:\path\to\Paty.ttf
 //
 // Nothing is overwritten: candidates are written to scripts/og-candidates/ and
-// you copy the chosen file over public/assets/og-image.png yourself.
+// you convert the chosen file to JPEG as public/assets/og-image.jpg yourself.
 //
 // Usage: node scripts/make-og-image.mjs [--script-font <ttf>] [--name <label>]
 // ============================================================================
@@ -110,4 +110,4 @@ for (const variant of variants) {
   console.log(`wrote ${output} (script size ${variant.size}px)`);
 }
 
-console.log('\nOpen the candidates, pick one, then copy it over public/assets/og-image.png.');
+console.log('\nOpen the candidates, pick one, then convert it to JPEG and save it as public/assets/og-image.jpg.');

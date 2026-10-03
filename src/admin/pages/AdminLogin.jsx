@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../context/ToastContext';
 import { friendlyAuthError } from '../../pages/Login';
 import PasswordInput from '../../components/PasswordInput';
-import { recordAdminLoginAttempt, isAdminLoginBlocked, clearAdminLoginAttempts } from '../../services/adminSecurity';
+import { recordAdminLoginFailure, isAdminLoginBlocked } from '../../services/adminSecurity';
 
 // Admin login uses the exact same Supabase Auth as customers — there is no
 // separate/hardcoded admin credential. What makes someone an admin is their row
@@ -43,17 +43,23 @@ export default function AdminLogin() {
 
     setError('');
     setLoading(true);
-    const ipHint = null; // the server records the address it sees
+
+    // Ask the server whether this email is throttled *before* submitting the
+    // password. Relying on `blockedUntil` alone meant a page reload cleared the
+    // block and every reload still made a real attempt against the account.
     try {
-      const { user } = await signIn({ email: emailValue, password: passwordValue });
-      const allowed = await recordAdminLoginAttempt(emailValue, true, ipHint);
-      if (!allowed) {
-        await signOut().catch(() => {});
+      if (await isAdminLoginBlocked(emailValue)) {
         setBlockedUntil(Date.now() + 15 * 60 * 1000);
         setError('Too many failed attempts. Try again in 15 minutes.');
+        setLoading(false);
         return;
       }
+    } catch {
+      // Counter unavailable — fall through and let Supabase decide.
+    }
 
+    try {
+      const { user } = await signIn({ email: emailValue, password: passwordValue });
       const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
       if (profileError) {
         setError('Signed in, but your account details could not be loaded. Please try again.');
@@ -64,12 +70,12 @@ export default function AdminLogin() {
         setError('This account does not have admin access.');
         return;
       }
-      await clearAdminLoginAttempts(emailValue).catch(() => {});
+      // Only genuine admins reach here, so this cannot forge audit rows.
       await supabase.rpc('record_admin_signin').catch(() => {});
       navigate('/admin', { replace: true });
     } catch (err) {
       const message = friendlyAuthError(err);
-      const stillAllowed = await recordAdminLoginAttempt(emailValue, false, ipHint).catch(() => true);
+      const stillAllowed = await recordAdminLoginFailure(emailValue).catch(() => true);
       if (!stillAllowed) {
         setBlockedUntil(Date.now() + 15 * 60 * 1000);
         setError('Too many failed attempts. Try again in 15 minutes.');

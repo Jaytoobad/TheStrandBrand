@@ -10,7 +10,7 @@ supabase/.temp
 brag-output*/
 
 # Generated link-preview candidates — pick one, then copy it over
-# public/assets/og-image.png. Committed copies would bloat the repo.
+# public/assets/og-image.jpg. Committed copies would bloat the repo.
 scripts/og-candidates/
 
 # Reference images dropped into public/assets by hand. Everything in public/

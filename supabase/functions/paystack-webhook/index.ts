@@ -42,13 +42,15 @@ Deno.serve(async (req) => {
       // so there is exactly one code path that ever marks an order paid.
       const result = await verifyAndFulfil(String(reference));
       if (result.error) {
-        console.warn('Webhook charge.success not fulfilled:', reference, result.error);
-        // Final provider failures and amount mismatches must not be fulfilled,
-        // but retryable verification/database failures should be retried by Paystack.
-        if (result.error === 'Payment was not successful.' || result.error === 'Payment amount could not be verified.') {
-          return new Response('ok', { status: 200 });
+        console.warn('Webhook charge.success not fulfilled:', reference, result.error, 'retryable:', result.retryable);
+        // Final provider failures and amount mismatches must not be fulfilled
+        // and retrying cannot change them, so acknowledge. Anything transient is
+        // returned as 500 so Paystack redelivers. Branch on the flag, not the
+        // wording of the message.
+        if (result.retryable) {
+          return new Response('Temporary payment processing failure', { status: 500 });
         }
-        return new Response('Temporary payment processing failure', { status: 500 });
+        return new Response('ok', { status: 200 });
       }
     }
 

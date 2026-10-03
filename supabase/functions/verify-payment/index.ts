@@ -40,7 +40,16 @@ Deno.serve(async (req) => {
     }
 
     const result = await verifyAndFulfil(String(reference));
-    return json(result, result.error ? 400 : 200);
+    // `retryable` is an internal signal for the webhook; the browser is told
+    // only what OrderConfirmation renders.
+    if (result.error) {
+      return json({ error: result.error }, 400);
+    }
+    return json({
+      orderId: result.orderId ?? null,
+      orderNumber: result.orderNumber ?? null,
+      status: result.status ?? null,
+    }, 200);
   } catch (err) {
     console.error(err);
     return json({ error: 'Could not verify payment right now. Please try again shortly.' }, 500);

@@ -6,7 +6,7 @@ import { useToast } from '../../context/ToastContext';
 import PageLoader from '../../components/PageLoader';
 import StatusPill from '../components/StatusPill';
 
-const STATUSES = ['pending_payment', 'paid', 'processing', 'packaged', 'dispatched', 'in_transit', 'delivered', 'cancelled', 'refunded'];
+const STATUSES = ['pending_payment', 'paid', 'processing', 'packaged', 'dispatched', 'in_transit', 'delivered', 'cancelled', 'expired', 'refunded'];
 
 // "0241234567" -> "233241234567" for wa.me links
 function toWhatsAppNumber(phone) {
