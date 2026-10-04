@@ -92,7 +92,15 @@ export default function AdminLogin() {
         return;
       }
       // Only genuine admins reach here, so this cannot forge audit rows.
-      await supabase.rpc('record_admin_signin').catch(() => {});
+      // supabase.rpc() returns a thenable builder, not a Promise, so it has no
+      // .catch() — calling one threw a TypeError and aborted the login after the
+      // credentials and the admin check had both already passed. Auditing must
+      // never be able to block a real admin from signing in.
+      try {
+        await supabase.rpc('record_admin_signin');
+      } catch {
+        // Audit write failed; carry on into the admin area.
+      }
       navigate('/admin', { replace: true });
     } catch (err) {
       // The password was accepted. Show the underlying reason instead of a
