@@ -58,33 +58,50 @@ export default function AdminLogin() {
       // Counter unavailable — fall through and let Supabase decide.
     }
 
+    // Only a rejected password counts towards the throttle. Everything that can go
+// wrong after Supabase has accepted the password is a different problem, and
+// counting those as failed sign-ins locked a real admin out of their own
+// account while the password was correct.
+    let user;
     try {
-      const { user } = await signIn({ email: emailValue, password: passwordValue });
-      const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
-      if (profileError) {
-        setError('Signed in, but your account details could not be loaded. Please try again.');
-        return;
-      }
-      if (profile?.role !== 'admin') {
-        await signOut().catch(() => {});
-        setError('This account does not have admin access.');
-        return;
-      }
-      // Only genuine admins reach here, so this cannot forge audit rows.
-      await supabase.rpc('record_admin_signin').catch(() => {});
-      navigate('/admin', { replace: true });
+      ({ user } = await signIn({ email: emailValue, password: passwordValue }));
     } catch (err) {
-      const message = friendlyAuthError(err);
+      console.error('Admin sign-in rejected:', err?.code, err?.status, err?.message);
       const stillAllowed = await recordAdminLoginFailure(emailValue).catch(() => true);
       if (!stillAllowed) {
         setBlockedUntil(Date.now() + 15 * 60 * 1000);
         setError('Too many failed attempts. Try again in 15 minutes.');
         showToast('Too many failed attempts. This account is paused for 15 minutes.', 'error');
       } else {
+        const message = friendlyAuthError(err);
         setError(message);
         showToast(message, 'error');
       }
-    } finally {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle();
+      if (profileError) throw profileError;
+      if (profile?.role !== 'admin') {
+        await signOut().catch(() => {});
+        setError('This account does not have admin access. Sign in with the account that was granted admin, or ask an administrator to grant it.');
+        showToast('This account does not have admin access.', 'error');
+        setLoading(false);
+        return;
+      }
+      // Only genuine admins reach here, so this cannot forge audit rows.
+      await supabase.rpc('record_admin_signin').catch(() => {});
+      navigate('/admin', { replace: true });
+    } catch (err) {
+      // The password was accepted. Show the underlying reason instead of a
+      // generic failure, because "something went wrong" here hides whether the
+      // problem is the profile lookup, the network, or the session.
+      console.error('Admin sign-in succeeded but the admin check failed:', err);
+      await signOut().catch(() => {});
+      const detail = String(err?.message || err || '').trim();
+      setError(`Signed in, but the admin check failed: ${detail || 'unknown error'}. Check the browser console and Supabase Auth logs.`);
       setLoading(false);
     }
   }
