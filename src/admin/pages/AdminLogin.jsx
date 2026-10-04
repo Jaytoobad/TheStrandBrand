@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { signIn, signOut } from '../../services/auth';
 import { supabase } from '../../lib/supabaseClient';
 import { useToast } from '../../context/ToastContext';
@@ -103,6 +103,9 @@ export default function AdminLogin() {
         </div>
         {error && <p className="form-error" role="alert">{error}</p>}
         <button className="btn btn-primary btn-block" disabled={loading}>{loading ? 'Signing in…' : 'Login'}</button>
+        <p className="admin-login-reset">
+          <Link to="/forgot-password">Forgot your password?</Link>
+        </p>
         <p className="admin-login-note">Admin sign-ins are recorded for security. Enable two-factor authentication on your Supabase account.</p>
       </form>
     </div>

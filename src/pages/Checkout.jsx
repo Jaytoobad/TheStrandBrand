@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -37,6 +37,21 @@ export default function Checkout() {
     digitalAddress: '',
     directions: '',
   });
+
+  // The profile resolves asynchronously, so seeding the form only in the
+  // useState initialiser left a signed-in customer with blank name and phone
+  // whenever they reached checkout before it loaded. Fill the gaps in once it
+  // arrives, without overwriting anything the customer has typed.
+  useEffect(() => {
+    if (!user) return;
+    const fullName = `${profile?.first_name || ''} ${profile?.last_name || ''}`.trim();
+    setForm((f) => ({
+      ...f,
+      name: f.name || fullName,
+      email: f.email || user.email || '',
+      phone: f.phone || profile?.phone || '',
+    }));
+  }, [user, profile]);
 
   if (items.length === 0) return <Navigate to="/cart" replace />;
 

@@ -4,6 +4,7 @@ import { fetchAllOrders } from '../../services/admin';
 import { formatMoney, formatOrderStatus } from '../../config/siteConfig'; // formatOrderStatus: filter labels
 import PageLoader from '../../components/PageLoader';
 import StatusPill from '../components/StatusPill';
+import LoadError from '../components/LoadError';
 
 const STATUSES = ['pending_payment', 'paid', 'processing', 'packaged', 'dispatched', 'in_transit', 'delivered', 'cancelled', 'expired', 'refunded'];
 
@@ -13,12 +14,16 @@ export default function AdminOrders() {
   const [status, setStatus] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
   const [search, setSearch] = useState('');
+  const [loadError, setLoadError] = useState(false);
 
   function load() {
     setLoading(true);
+    setLoadError(false);
     fetchAllOrders({ status: status || undefined, paymentStatus: paymentStatus || undefined, search: search || undefined })
       .then(setOrders)
-      .catch(() => setOrders([]))
+      // An empty list is what a failed request used to produce, so the owner was
+      // told they had no orders rather than that the request failed.
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }
 
@@ -27,6 +32,7 @@ export default function AdminOrders() {
   return (
     <div>
       <div className="admin-header"><h1>Orders</h1></div>
+      {loadError && <LoadError what="orders" onRetry={load} />}
 
       <div className="admin-toolbar">
         <input type="search" aria-label="Search orders" placeholder="Search order #, customer, email…" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && load()} />

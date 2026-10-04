@@ -53,12 +53,18 @@ export function cheapestAvailableVariant(product) {
 
 // The lowest price across the product: its cheapest length for a sold-by-length
 // product, otherwise its normal price. Used for grid display and price sorting.
+//
+// A sale price only counts when it is genuinely lower. A stray sale_price set
+// above price used to make the grid sort by one number while the card printed
+// another, so "Low to High" put a product somewhere its own price contradicted.
 export function displayPrice(product) {
   if (isSoldByLength(product)) {
     const cheapest = pricedVariants(product)[0];
     if (cheapest) return variantPrice(cheapest);
   }
-  return Number(product?.sale_price ?? product?.price ?? 0);
+  const base = Number(product?.price ?? 0);
+  const sale = product?.sale_price == null ? null : Number(product.sale_price);
+  return sale != null && sale < base ? sale : base;
 }
 
 // True when every length is sold out. The product row's own stock is not used

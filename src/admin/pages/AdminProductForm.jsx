@@ -48,17 +48,23 @@ export default function AdminProductForm() {
   const soldByInches = Boolean(categories.find((c) => c.id === form.category_id)?.sold_by_inches);
 
   // Keep rows sorted shortest to longest so the order the merchant sees matches
-  // the order customers see.
+  // the order customers see. Rows loaded from the database carry an inch mark
+  // ('18"'), so the number has to be parsed rather than coerced, or every
+  // comparison is NaN and the sort silently does nothing.
   function sortedInchRows(rows) {
     return [...rows].sort((a, b) => {
-      const aLen = Number(a.inches);
-      const bLen = Number(b.inches);
+      const aLen = Number.parseFloat(String(a.inches ?? '').replace(/[^0-9.]/g, ''));
+      const bLen = Number.parseFloat(String(b.inches ?? '').replace(/[^0-9.]/g, ''));
       if (Number.isFinite(aLen) && Number.isFinite(bLen) && aLen !== bLen) return aLen - bLen;
       return 0;
     });
   }
 
-  const inchRows = soldByInches ? sortedInchRows(variants) : [];
+  // Shown in the order the merchant typed them, not re-sorted as they type. A live
+  // sort would move a row the moment its length becomes valid, remounting the
+  // input and losing focus mid-word. Ordering for customers is applied on save,
+  // where rows are sorted shortest first.
+  const inchRows = soldByInches ? variants : [];
 
   // One place that decides whether the length table is valid, so the sidebar
   // summary and the save button can never disagree with what submit will do.
@@ -294,12 +300,12 @@ export default function AdminProductForm() {
           <section className="admin-form-section">
             <h3>Basics</h3>
             <div className="form-group">
-              <label>Product Name</label>
-              <input required value={form.name} onChange={(e) => updateField('name', e.target.value)} />
+              <label htmlFor="pf-name">Product Name</label>
+              <input id="pf-name" required value={form.name} onChange={(e) => updateField('name', e.target.value)} />
             </div>
             <div className="form-group">
-              <label>Category</label>
-              <select value={form.category_id} onChange={(e) => updateField('category_id', e.target.value)}>
+              <label htmlFor="pf-category">Category</label>
+              <select id="pf-category" value={form.category_id} onChange={(e) => updateField('category_id', e.target.value)}>
                 <option value="">No category</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -310,8 +316,8 @@ export default function AdminProductForm() {
               )}
             </div>
             <div className="form-group">
-              <label>Description</label>
-              <textarea rows={5} value={form.description} onChange={(e) => updateField('description', e.target.value)} />
+              <label htmlFor="pf-description">Description</label>
+              <textarea id="pf-description" rows={5} value={form.description} onChange={(e) => updateField('description', e.target.value)} />
             </div>
           </section>
 
@@ -343,9 +349,9 @@ export default function AdminProductForm() {
             {soldByInches ? (
               <>
                 <p className="form-hint form-hint-lead">
-                  Every length you sell, shortest first. Customers choose one on the product page and are
-                  charged that length&rsquo;s price. The product&rsquo;s own price follows your cheapest
-                  length automatically.
+                  Every length you sell. Customers choose one on the product page and are charged
+                  that length&rsquo;s price; lengths are shown to them shortest first automatically.
+                  The product&rsquo;s own price follows your cheapest length.
                 </p>
                 <div className="data-table-wrap">
                   <table className="data-table is-stacked length-table">
@@ -357,7 +363,11 @@ export default function AdminProductForm() {
                         const originalIndex = variants.indexOf(row);
                         const bad = problemIndexes.has(originalIndex);
                         return (
-                          <tr key={row.id || `${row.inches}-${originalIndex}`} className={bad ? 'row-problem' : undefined}>
+                          // Keyed on the row's own position, which never changes while
+                          // typing. Keying on the length text changed the key on every
+                          // keystroke and remounted the input, so a length could not be
+                          // typed past its first character.
+                          <tr key={row.id || `inch-${originalIndex}`} className={bad ? 'row-problem' : undefined}>
                             <td data-label="Length (inches)">
                               <input
                                 type="text"
@@ -417,17 +427,17 @@ export default function AdminProductForm() {
               <>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Price (GH₵)</label>
-                    <input required type="number" min="0" step="0.01" value={form.price} onChange={(e) => updateField('price', e.target.value)} />
+                    <label htmlFor="pf-price">Price (GH₵)</label>
+                    <input id="pf-price" required type="number" min="0" step="0.01" value={form.price} onChange={(e) => updateField('price', e.target.value)} />
                   </div>
                   <div className="form-group">
-                    <label>Sale Price (optional)</label>
-                    <input type="number" min="0" step="0.01" value={form.sale_price} onChange={(e) => updateField('sale_price', e.target.value)} />
+                    <label htmlFor="pf-sale-price">Sale Price (optional)</label>
+                    <input id="pf-sale-price" type="number" min="0" step="0.01" value={form.sale_price} onChange={(e) => updateField('sale_price', e.target.value)} />
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Base Stock</label>
-                  <input type="number" min="0" value={form.stock} onChange={(e) => updateField('stock', e.target.value)} />
+                  <label htmlFor="pf-stock">Base Stock</label>
+                  <input id="pf-stock" type="number" min="0" value={form.stock} onChange={(e) => updateField('stock', e.target.value)} />
                 </div>
               </>
             )}
@@ -439,10 +449,16 @@ export default function AdminProductForm() {
               <p className="form-hint form-hint-lead">Options add or subtract from the base price above.</p>
               {variants.map((v, i) => (
                 <div key={i} className="variant-row">
-                  <input placeholder="Option name (e.g. Length)" value={v.option_name} onChange={(e) => updateVariant(i, 'option_name', e.target.value)} />
-                  <input placeholder="Value (e.g. 20&quot;)" value={v.option_value} onChange={(e) => updateVariant(i, 'option_value', e.target.value)} />
-                  <input placeholder="Price +/-" type="number" step="0.01" value={v.price_adjustment} onChange={(e) => updateVariant(i, 'price_adjustment', e.target.value)} />
-                  <input placeholder="Stock" type="number" value={v.stock} onChange={(e) => updateVariant(i, 'stock', e.target.value)} />
+                  {/* A placeholder is not an accessible name, so each field also
+                      gets a real label and is tied to the row it belongs to. */}
+                  <label className="visually-hidden" htmlFor={`var-name-${i}`}>Option name for variant {i + 1}</label>
+                  <input id={`var-name-${i}`} placeholder="Option name (e.g. Length)" value={v.option_name} onChange={(e) => updateVariant(i, 'option_name', e.target.value)} />
+                  <label className="visually-hidden" htmlFor={`var-value-${i}`}>Value for variant {i + 1}</label>
+                  <input id={`var-value-${i}`} placeholder="Value (e.g. 20&quot;)" value={v.option_value} onChange={(e) => updateVariant(i, 'option_value', e.target.value)} />
+                  <label className="visually-hidden" htmlFor={`var-adj-${i}`}>Price adjustment for variant {i + 1}</label>
+                  <input id={`var-adj-${i}`} placeholder="Price +/-" type="number" step="0.01" value={v.price_adjustment} onChange={(e) => updateVariant(i, 'price_adjustment', e.target.value)} />
+                  <label className="visually-hidden" htmlFor={`var-stock-${i}`}>Stock for variant {i + 1}</label>
+                  <input id={`var-stock-${i}`} placeholder="Stock" type="number" value={v.stock} onChange={(e) => updateVariant(i, 'stock', e.target.value)} />
                   <button type="button" className="btn btn-sm btn-outline" onClick={() => removeVariant(i)}>Remove</button>
                 </div>
               ))}

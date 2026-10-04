@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { fetchAdminOrderById, updateOrderStatus, updateOrderShipping } from '../../services/admin';
 import { formatMoney, formatOrderStatus } from '../../config/siteConfig';
+import { COURIERS, buildTrackingUrl, findCourierByName } from '../../config/couriers';
+import { safeExternalUrl } from '../../lib/safeUrl';
 import { useToast } from '../../context/ToastContext';
 import PageLoader from '../../components/PageLoader';
 import StatusPill from '../components/StatusPill';
@@ -23,6 +25,7 @@ export default function AdminOrderDetails() {
   const [savingStatus, setSavingStatus] = useState(false);
   const [savingShipping, setSavingShipping] = useState(false);
   const [shipping, setShipping] = useState({ courier_name: '', tracking_number: '', external_tracking_url: '', estimated_delivery: '' });
+  const [courierId, setCourierId] = useState('');
   const { showToast } = useToast();
 
   function load() {
@@ -33,6 +36,7 @@ export default function AdminOrderDetails() {
         courier_name: o.courier_name || '', tracking_number: o.tracking_number || '',
         external_tracking_url: o.external_tracking_url || '', estimated_delivery: o.estimated_delivery || '',
       });
+      setCourierId(findCourierByName(o.courier_name)?.id || 'other');
     }).catch(() => setOrder(null)).finally(() => setLoading(false));
   }
   useEffect(load, [id]);
@@ -74,6 +78,35 @@ export default function AdminOrderDetails() {
 
   const history = [...(order.order_status_history || [])].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   const updateShipping = (field) => (e) => setShipping((s) => ({ ...s, [field]: e.target.value }));
+
+  // Choosing a courier sets its name and rebuilds the tracking link from the
+  // number already typed. The URL stays editable, because a courier sometimes
+  // uses a different page for a particular parcel.
+  function handleCourierChange(e) {
+    const chosen = COURIERS.find((c) => c.id === e.target.value);
+    setCourierId(chosen?.id || 'other');
+    setShipping((s) => ({
+      ...s,
+      courier_name: chosen && chosen.id !== 'other' ? chosen.name : s.courier_name,
+      external_tracking_url: buildTrackingUrl(chosen?.template, s.tracking_number) || (chosen?.id === 'other' ? s.external_tracking_url : ''),
+    }));
+  }
+
+  // Keep the link in step as the number is typed, but only while it is still the
+  // one this courier would generate — never overwrite a link the admin edited.
+  function handleTrackingNumber(e) {
+    const tracking_number = e.target.value;
+    const chosen = COURIERS.find((c) => c.id === courierId);
+    setShipping((s) => {
+      const generated = buildTrackingUrl(chosen?.template, s.tracking_number);
+      const keepEdited = s.external_tracking_url && s.external_tracking_url !== generated;
+      return {
+        ...s,
+        tracking_number,
+        external_tracking_url: keepEdited ? s.external_tracking_url : buildTrackingUrl(chosen?.template, tracking_number),
+      };
+    });
+  }
 
   return (
     <div className="admin-order">
@@ -124,14 +157,42 @@ export default function AdminOrderDetails() {
 
           <section className="admin-panel">
             <h2>Courier / tracking</h2>
+            <p className="form-hint form-hint-lead">
+              Pick the courier and the tracking link is built for you. Paste the customer&rsquo;s
+              tracking number exactly as the courier gave it to you.
+            </p>
             <form onSubmit={handleShippingSave}>
               <div className="form-row">
-                <div className="form-group"><label htmlFor="ship-courier">Courier name</label><input id="ship-courier" value={shipping.courier_name} onChange={updateShipping('courier_name')} /></div>
-                <div className="form-group"><label htmlFor="ship-tracking">Tracking number</label><input id="ship-tracking" value={shipping.tracking_number} onChange={updateShipping('tracking_number')} /></div>
+                <div className="form-group">
+                  <label htmlFor="ship-courier-picker">Courier</label>
+                  <select id="ship-courier-picker" value={courierId} onChange={handleCourierChange}>
+                    <option value="">Select a courier…</option>
+                    {COURIERS.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="ship-courier">Courier name (as shown to the customer)</label>
+                  <input id="ship-courier" value={shipping.courier_name} onChange={updateShipping('courier_name')} />
+                </div>
               </div>
               <div className="form-row">
-                <div className="form-group"><label htmlFor="ship-url">External tracking URL</label><input id="ship-url" type="url" value={shipping.external_tracking_url} onChange={updateShipping('external_tracking_url')} /></div>
-                <div className="form-group"><label htmlFor="ship-eta">Estimated delivery</label><input id="ship-eta" type="date" value={shipping.estimated_delivery || ''} onChange={updateShipping('estimated_delivery')} /></div>
+                <div className="form-group">
+                  <label htmlFor="ship-tracking">Tracking number</label>
+                  <input id="ship-tracking" value={shipping.tracking_number} onChange={handleTrackingNumber} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="ship-eta">Estimated delivery</label>
+                  <input id="ship-eta" type="date" value={shipping.estimated_delivery || ''} onChange={updateShipping('estimated_delivery')} />
+                </div>
+              </div>
+              <div className="form-group">
+                <label htmlFor="ship-url">Tracking link</label>
+                <input id="ship-url" type="url" value={shipping.external_tracking_url} onChange={updateShipping('external_tracking_url')} placeholder="Built from the courier and tracking number" />
+                {safeExternalUrl(shipping.external_tracking_url) && (
+                  <p className="form-hint">
+                    <a href={safeExternalUrl(shipping.external_tracking_url)} target="_blank" rel="noreferrer">Open this link to check it</a>
+                  </p>
+                )}
               </div>
               <button className="btn btn-outline btn-sm" type="submit" disabled={savingShipping}>{savingShipping ? 'Saving…' : 'Save tracking'}</button>
             </form>

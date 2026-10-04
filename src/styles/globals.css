@@ -1043,6 +1043,19 @@ html, body { overflow-x: hidden; }
 .track-result-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
 .track-result-header h2 { font-size: 1.2rem; margin-bottom: 4px; }
 .status-badge { background: var(--color-brown); color: #fff; }
+/* The tracking page styles its badge per order status, so a delivered order is
+   visibly different from a cancelled or expired one. Without these every status
+   inherited the same brown. */
+.status-badge.status-paid,
+.status-badge.status-processing,
+.status-badge.status-packaged { background: #e6eef8; color: #2d5487; }
+.status-badge.status-dispatched,
+.status-badge.status-in_transit { background: #fbf0dc; color: #8a5a14; }
+.status-badge.status-delivered { background: #e3f1e7; color: #2f6b42; }
+.status-badge.status-cancelled,
+.status-badge.status-expired { background: #f8e1de; color: #9b2f24; }
+.status-badge.status-refunded { background: #f1ece9; color: #6b5f5a; }
+.status-badge.status-pending_payment { background: #f1ece9; color: #6b5f5a; }
 .status-timeline { list-style: none; padding: 0; margin: 20px 0; display: flex; flex-direction: column; gap: 14px; }
 .status-timeline li { display: flex; align-items: center; gap: 10px; color: var(--color-text-muted); font-size: 0.9rem; }
 .status-timeline li.done { color: var(--color-text); font-weight: 600; }
@@ -1443,6 +1456,19 @@ html, body { overflow-x: hidden; }
 .admin-table-title { margin: 0 0 12px; }
 .admin-table-gap { margin-bottom: 32px; }
 .admin-page-hint { margin: -10px 0 18px; font-size: 0.85rem; color: var(--color-text-muted); }
+.cell-muted { color: var(--color-text-muted); font-size: 0.85em; }
+.admin-load-error {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding: 14px 16px; margin-bottom: 18px; border-radius: var(--radius-md);
+  background: #f8e1de; border: 1px solid #f0c8c3; color: #7d2419;
+}
+.admin-load-error strong { display: block; font-size: 0.9rem; }
+.admin-load-error span { font-size: 0.85rem; }
+.admin-login-note { margin: 18px 0 0; font-size: 0.76rem; color: var(--color-text-muted); line-height: 1.5; }
+.admin-login-reset { margin: 14px 0 0; font-size: 0.85rem; text-align: center; }
+.admin-login-reset a { color: var(--color-black); }
+.stock-derived { display: inline-block; }
+.stock-note { display: block; margin-top: 4px; }
 .admin-select { padding: 9px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #fff; }
 .stock-input { width: 88px; padding: 7px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
 .admin-view-shop { display: block; margin-bottom: 8px; color: #fff; font-size: 0.8rem; }

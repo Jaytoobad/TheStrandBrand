@@ -55,7 +55,7 @@ if (sort === 'price_asc' || sort === 'price_desc') {
 export async function fetchCartPrices(productIds) {
   const { data, error } = await supabase
     .from('products')
-    .select('id, price, sale_price, is_active, product_variants(id, price, price_adjustment)')
+    .select('id, price, sale_price, stock, is_active, categories(sold_by_inches), product_variants(id, price, price_adjustment, stock)')
     .in('id', productIds);
   if (error) throw error;
   return data;

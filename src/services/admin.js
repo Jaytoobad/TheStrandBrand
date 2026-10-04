@@ -1,6 +1,8 @@
 import { supabase } from '../lib/supabaseClient';
 import { compressImage } from '../lib/imageCompression';
 import { THUMB_WIDTH, thumbPath } from '../lib/imageUrl';
+import { safeExternalUrl } from '../lib/safeUrl';
+import { isSoldByLength } from '../lib/pricing';
 
 // Every call in this file relies on Supabase RLS's is_admin() check to
 // actually enforce access — see supabase/migrations/0001_init.sql. If a
@@ -30,13 +32,18 @@ export async function fetchDashboardStats() {
 
   // head: true returns only the count (data is always null), so read `count`.
   // Made-to-order products don't use stock, so they never count as low stock.
-  const { count: lowStockCount } = await supabase.from('products').select('*', { count: 'exact', head: true })
+  // A sold-by-length product stores no stock of its own either — its lengths do —
+  // so counting it would list every bundle as low regardless of what is in stock.
+  const { data: lowStockRows } = await supabase
+    .from('products')
+    .select('id, stock, categories(sold_by_inches)')
     .lte('stock', 5).eq('allow_preorder', false).eq('is_active', true);
+  const lowStockCount = (lowStockRows || []).filter((p) => !isSoldByLength(p)).length;
 
   return {
     totalSales, todaySales, totalOrders, pendingOrders, deliveredOrders, totalCustomers, totalProducts,
     paidOrderCount: paidOrders.data?.length || 0,
-    lowStockCount: lowStockCount ?? 0,
+    lowStockCount,
   };
 }
 
@@ -243,6 +250,13 @@ export async function updateOrderStatus(orderId, status, note) {
 }
 
 export async function updateOrderShipping(orderId, fields) {
+  // The tracking link is shown to customers as a clickable link, so a value that
+  // is not a plain http(s) URL is rejected here rather than stored and quietly
+  // dropped at display time.
+  const url = String(fields.external_tracking_url || '').trim();
+  if (url && !safeExternalUrl(url)) {
+    throw new Error('The tracking link must be a full http:// or https:// address.');
+  }
   const { error } = await supabase.from('orders').update(fields).eq('id', orderId);
   if (error) throw error;
 }
@@ -284,7 +298,10 @@ export async function deleteReview(id) {
 // --- Inventory ---
 export async function fetchInventory() {
   const [{ data: products }, { data: variants }] = await Promise.all([
-    supabase.from('products').select('id, name, stock, is_active, allow_preorder').order('name'),
+    // categories(sold_by_inches) is needed because a sold-by-length product keeps
+    // no stock of its own: the real count lives on its lengths, so the product
+    // row would otherwise read as permanently out of stock.
+    supabase.from('products').select('id, name, stock, is_active, allow_preorder, categories(sold_by_inches)').order('name'),
     supabase.from('product_variants').select('id, product_id, option_name, option_value, price, stock, sort_order, products(name)').order('sort_order'),
   ]);
   return { products: products || [], variants: variants || [] };

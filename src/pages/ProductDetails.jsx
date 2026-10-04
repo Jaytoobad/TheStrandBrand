@@ -4,7 +4,7 @@ import { fetchProductBySlug, fetchApprovedReviews } from '../services/products';
 import { formatCategoryName, formatMoney } from '../config/siteConfig';
 import posthog, { canCapturePostHog } from '../lib/posthog';
 import { useCart } from '../context/CartContext';
-import { isSoldByLength, unitPriceFor, displayPrice, lengthLabel, variantPrice } from '../lib/pricing';
+import { isSoldByLength, unitPriceFor, displayPrice, lengthLabel, variantPrice, totalStock } from '../lib/pricing';
 import DeliveryEstimate from '../components/DeliveryEstimate';
 import { useToast } from '../context/ToastContext';
 import PageLoader from '../components/PageLoader';
@@ -94,10 +94,24 @@ export default function ProductDetails() {
   const onSale = !soldByLength && product.sale_price != null && product.sale_price < product.price;
   const finalPrice = unitPriceFor(product, selectedVariant);
   const requiresVariant = Object.keys(orderedOptionGroups).length > 0;
-  const stock = selectedVariant ? selectedVariant.stock : product.stock;
+  // A sold-by-length product deliberately carries no stock of its own, so before
+  // a length is chosen the honest number is the total across its lengths. Reading
+  // product.stock here would report every bundle as sold out and block the buy.
+  const stock = selectedVariant
+    ? selectedVariant.stock
+    : soldByLength
+      ? totalStock(product)
+      : product.stock;
   const outOfStock = stock <= 0 && !product.allow_preorder;
   // Until a length is chosen, show the cheapest one rather than a bare number.
   const showsFromPrice = soldByLength && !selectedVariant;
+  const maxQuantity = stock > 0 ? stock : 99;
+
+  // Switching to a shorter length must not leave a quantity the new length cannot
+  // supply, or the customer is only told at checkout.
+  useEffect(() => {
+    setQuantity((q) => Math.min(Math.max(1, q), maxQuantity));
+  }, [maxQuantity]);
 
   function handleAddToCart() {
     if (requiresVariant && !selectedVariant) {
@@ -222,10 +236,16 @@ export default function ProductDetails() {
           <div className="quantity-selector">
             <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} aria-label="Decrease quantity">−</button>
             <span>{quantity}</span>
-            <button onClick={() => setQuantity((q) => Math.min(stock || 99, q + 1))} aria-label="Increase quantity">+</button>
+            <button onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))} aria-label="Increase quantity">+</button>
           </div>
           <span className={outOfStock ? 'stock-status stock-out' : 'stock-status'}>
-            {outOfStock ? 'Out of stock' : product.allow_preorder ? 'Available to preorder' : `${stock} in stock`}
+            {outOfStock
+              ? 'Out of stock'
+              : product.allow_preorder
+                ? 'Available to preorder'
+                : soldByLength && !selectedVariant
+                  ? `${stock} in stock across all lengths`
+                  : `${stock} in stock`}
           </span>
         </div>
 

@@ -79,7 +79,7 @@ export default function Navbar() {
       </header>
 
       <div className={`drawer-overlay ${drawerOpen ? 'open' : ''}`} onClick={() => setDrawerOpen(false)} />
-      <aside className={`mobile-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen}>
+      <aside className={`mobile-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen} inert={!drawerOpen ? '' : undefined}>
         <button className="drawer-close" onClick={() => setDrawerOpen(false)} aria-label="Close menu">×</button>
         <nav className="drawer-links">
           {navLinks.map((l) => (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchDashboardStats, fetchSalesOverTime, fetchAllProducts } from '../../services/admin';
 import { formatMoney } from '../../config/siteConfig';
+import { isSoldByLength } from '../../lib/pricing';
 import PageLoader from '../../components/PageLoader';
 
 export default function AdminAnalytics() {
@@ -24,8 +25,13 @@ export default function AdminAnalytics() {
 
   // Average over paid orders only; unpaid checkouts would drag it down.
   const avgOrderValue = stats.paidOrderCount ? stats.totalSales / stats.paidOrderCount : 0;
-  // Made-to-order products don't use stock, so they never show as low stock.
-  const lowStock = products.filter((p) => p.is_active && !p.allow_preorder && p.stock <= 5).sort((a, b) => a.stock - b.stock).slice(0, 8);
+  // Made-to-order products don't use stock, and a sold-by-length product keeps its
+  // stock on its lengths rather than on the product row, so neither can be
+  // listed as low stock from the product's own count.
+  const lowStock = products
+    .filter((p) => p.is_active && !p.allow_preorder && !isSoldByLength(p) && p.stock <= 5)
+    .sort((a, b) => a.stock - b.stock)
+    .slice(0, 8);
   const ordersInRange = sales.length;
 
   return (

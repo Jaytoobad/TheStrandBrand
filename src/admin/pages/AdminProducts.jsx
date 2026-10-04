@@ -5,14 +5,20 @@ import { formatMoney, formatCategoryName } from '../../config/siteConfig';
 import { displayPrice, isSoldByLength, pricedVariants, totalStock } from '../../lib/pricing';
 import { useToast } from '../../context/ToastContext';
 import PageLoader from '../../components/PageLoader';
+import LoadError from '../components/LoadError';
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const { showToast } = useToast();
 
   function load() {
-    fetchAllProducts().then(setProducts).finally(() => setLoading(false));
+    setLoadError(false);
+    fetchAllProducts()
+      .then(setProducts)
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
   }
 
   useEffect(load, []);
@@ -34,6 +40,8 @@ export default function AdminProducts() {
         <h1>Products</h1>
         <Link to="/admin/products/new" className="btn btn-primary btn-sm">+ Add Product</Link>
       </div>
+
+      {loadError && <LoadError what="products" onRetry={load} />}
 
       <div className="data-table-wrap">
         <table className="data-table is-stacked">

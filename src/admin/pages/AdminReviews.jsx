@@ -3,14 +3,16 @@ import { fetchAllReviews, setReviewStatus, deleteReview } from '../../services/a
 import { useToast } from '../../context/ToastContext';
 import PageLoader from '../../components/PageLoader';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import LoadError from '../components/LoadError';
 
 export default function AdminReviews() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const { showToast } = useToast();
 
-  function load() { fetchAllReviews().then(setReviews).finally(() => setLoading(false)); }
+  function load() { setLoadError(false); fetchAllReviews().then(setReviews).catch(() => setLoadError(true)).finally(() => setLoading(false)); }
   useEffect(load, []);
 
   async function handleApprove(r) {
@@ -30,6 +32,7 @@ export default function AdminReviews() {
   return (
     <div>
       <div className="admin-header"><h1>Reviews</h1></div>
+      {loadError && <LoadError what="reviews" onRetry={load} />}
       <div className="data-table-wrap">
         <table className="data-table is-stacked">
           <thead><tr><th>Product</th><th>Customer</th><th>Rating</th><th>Comment</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>

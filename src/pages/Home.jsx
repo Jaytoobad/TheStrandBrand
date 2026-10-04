@@ -56,7 +56,7 @@ export default function Home() {
             <span className="brand-story-label">The Collection</span>
             <h2>Made for the modern woman</h2>
             <p>Every wig is chosen for how it wears, not just how it looks. Expect breathable lace, true-to-life density, and colours that suit real skin tones. Prices are in cedis, with delivery across Ghana.</p>
-            <a href="/shop" className="btn btn-outline">Explore the collection</a>
+            <Link to="/shop" className="btn btn-outline">Explore the collection</Link>
           </div>
         </div>
       </section>

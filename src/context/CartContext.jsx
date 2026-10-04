@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
 import { fetchCartPrices } from '../services/products';
-import { unitPriceFor } from '../lib/pricing';
+import { unitPriceFor, lengthLabel } from '../lib/pricing';
 
 // Guest carts persist in localStorage (a per-browser convenience, not
 // sensitive data). For a logged-in customer this still works the same way;
@@ -74,7 +74,12 @@ export function CartProvider({ children }) {
           image: product.product_images?.find((im) => im.is_primary)?.url || product.product_images?.[0]?.url,
           unitPrice: unitPriceFor(product, variant),
           variantId: variant?.id ?? null,
-          variantLabel: variant ? `${variant.option_name}: ${variant.option_value}` : null,
+          // lengthLabel adds the inch mark for a length, and leaves anything else
+          // (a colour, a size) as the merchant wrote it, so the cart reads the
+          // same way the product page does.
+          variantLabel: variant
+            ? `${variant.option_name}: ${/length/i.test(variant.option_name || '') ? lengthLabel(variant) : variant.option_value}`
+            : null,
           quantity,
         },
       ];

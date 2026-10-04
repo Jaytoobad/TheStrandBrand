@@ -4,6 +4,7 @@ import { useToast } from '../../context/ToastContext';
 import { compressImage } from '../../lib/imageCompression';
 import PageLoader from '../../components/PageLoader';
 import { formatCategoryName } from '../../config/siteConfig';
+import LoadError from '../components/LoadError';
 
 const empty = { name: '', slug: '', description: '', image_url: '', sort_order: 0, is_active: true, sold_by_inches: false };
 
@@ -24,12 +25,13 @@ function imageUrlHint(url) {
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [editing, setEditing] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [brokenUrl, setBrokenUrl] = useState(null);
   const { showToast } = useToast();
 
-  function load() { fetchAllCategories().then(setCategories).finally(() => setLoading(false)); }
+  function load() { setLoadError(false); fetchAllCategories().then(setCategories).catch(() => setLoadError(true)).finally(() => setLoading(false)); }
   useEffect(load, []);
 
   const imageUrl = editing?.image_url?.trim() || '';
@@ -84,6 +86,8 @@ export default function AdminCategories() {
         <h1>Categories</h1>
         <button className="btn btn-primary btn-sm" onClick={() => setEditing({ ...empty })}>+ Add Category</button>
       </div>
+
+      {loadError && <LoadError what="categories" onRetry={load} />}
 
       <div className="data-table-wrap">
         <table className="data-table is-stacked">
