@@ -67,6 +67,53 @@ create index if not exists error_reports_last_seen_idx
 create unique index if not exists error_reports_fingerprint_key
   on public.error_reports (fingerprint);
 
+-- The counting increment lives here rather than in the Edge Function.
+-- PostgREST's upsert can only set columns to the values it sends, so it cannot
+-- express `occurrences = occurrences + 1` — a plain upsert would leave every
+-- report stuck at 1 with a stale last_seen, which is the entire value of the
+-- table. service_role only: this is what makes the browser unable to write
+-- directly, and it is the one way to bump the counter.
+create or replace function public.record_error_report(
+  p_fingerprint text,
+  p_message     text,
+  p_stack       text,
+  p_source      text,
+  p_url         text,
+  p_user_id     uuid,
+  p_context     jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.error_reports as e
+       (fingerprint, message, stack, source, url, user_id, context)
+  values (p_fingerprint, p_message, p_stack, p_source, p_url, p_user_id, p_context)
+  on conflict (fingerprint) do update
+     set occurrences = e.occurrences + 1,
+         last_seen   = now(),
+         -- Reopened rather than revived in place: a bug the owner dismissed is
+         -- worth seeing again, and silently adding to a closed row would hide it.
+         resolved_at = null,
+         -- Freshest detail wins, because a new deploy can change the trace and
+         -- leave the old one pointing at code that no longer exists.
+         message     = excluded.message,
+         stack       = excluded.stack,
+         url         = excluded.url,
+         context     = excluded.context,
+         -- Never downgrade an identified report to anonymous on a later
+         -- anonymous occurrence of the same bug.
+         user_id     = coalesce(excluded.user_id, e.user_id);
+end;
+$$;
+
+revoke all on function public.record_error_report(text, text, text, text, text, uuid, jsonb)
+  from public, anon, authenticated;
+grant execute on function public.record_error_report(text, text, text, text, text, uuid, jsonb)
+  to service_role;
+
 alter table public.error_reports enable row level security;
 
 -- No insert policy on purpose. Reports arrive only via the report-error function.

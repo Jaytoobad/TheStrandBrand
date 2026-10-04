@@ -63,6 +63,16 @@ function fingerprintFor(message, stack) {
   return hash.toString(16).padStart(8, '0');
 }
 
+/** Short SHA-256 hex digest, used to key rate limits without storing an address. */
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 32);
+}
+
 /** Resolves the signed-in user id when a valid bearer token was sent. */
 async function resolveUserId(req, supabase) {
   const header = req.headers.get('authorization') || '';
@@ -112,8 +122,14 @@ Deno.serve(async (req) => {
   // Generous per-IP ceiling: a page with a broken component can fire repeatedly
   // and a real visitor should never be silenced. The per-fingerprint cap is the
   // one that stops a single error from filling the table.
+  //
+  // The address is hashed rather than stored: this key only needs to be unique per
+  // visitor, and keeping a raw address next to an error about a specific page
+  // would create a record worth avoiding. The other functions in this folder key
+  // their limits on the raw address; this one does not need to match them.
+  const ipHash = await sha256Hex(clientIdentifier(req));
   const rateLimited = !(await allowRequest([
-    { scope: 'report_error_ip', max: 120, windowSeconds: 3600, identifier: clientIdentifier(req) },
+    { scope: 'report_error_ip', max: 120, windowSeconds: 3600, identifier: ipHash },
     { scope: 'report_error_fingerprint', max: 30, windowSeconds: 3600, identifier: fingerprint },
   ]));
   if (rateLimited) return json({ error: 'Too many reports. Not recorded.' }, 429);
@@ -151,12 +167,18 @@ Deno.serve(async (req) => {
     context,
   };
 
-  // onConflict targets the unique index on fingerprint. resolved_at is cleared so
-  // a bug the owner dismissed comes back as unresolved if it ever happens again.
-  const { error } = await supabase
-    .from('error_reports')
-    .upsert(row, { onConflict: 'fingerprint' })
-    .select();
+  // record_error_report (service_role only) does the upsert. It cannot be done
+  // with PostgREST's upsert, which can only overwrite columns with sent values
+  // and therefore cannot increment occurrences or reopen a resolved report.
+  const { error } = await supabase.rpc('record_error_report', {
+    p_fingerprint: row.fingerprint,
+    p_message: row.message,
+    p_stack: row.stack,
+    p_source: row.source,
+    p_url: row.url,
+    p_user_id: row.user_id,
+    p_context: row.context,
+  });
 
   if (error) {
     // Never let reporting an error become an error of its own in the browser.

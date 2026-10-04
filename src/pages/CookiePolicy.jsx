@@ -29,7 +29,9 @@ export default function CookiePolicy() {
         record your IP address, and is not shared with any third party. If you are
         signed in, the report is linked to your account so we can trace problems
         that only affect you; if you are browsing as a visitor, the report is
-        anonymous. Reports are deleted after twelve months.
+        anonymous. Rate limiting for this log uses a one-way hash of your network
+        address, which cannot be turned back into an address. Reports are deleted
+        after twelve months.
       </p>
 
       <h2>Your choice</h2>
