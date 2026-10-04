@@ -290,6 +290,31 @@ export async function setReviewStatus(id, fields) {
   if (error) throw error;
 }
 
+// --- Error reports ---
+// Reads are gated by RLS (is_admin), so no extra check is needed here.
+
+export async function fetchErrorReports({ includeResolved = false, limit = 100 } = {}) {
+  let query = supabase
+    .from('error_reports')
+    .select('id, fingerprint, message, stack, source, url, user_id, context, occurrences, first_seen, last_seen, resolved_at')
+    .order('last_seen', { ascending: false })
+    .limit(limit);
+  if (!includeResolved) query = query.is('resolved_at', null);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data || [];
+}
+
+// Resolving is not deleting: the row stays so a bug that returns is recognised as
+// the same one, and the Edge Function reopens it on the next occurrence.
+export async function setErrorReportResolved(id, resolved) {
+  const { error } = await supabase
+    .from('error_reports')
+    .update({ resolved_at: resolved ? new Date().toISOString() : null })
+    .eq('id', id);
+  if (error) throw error;
+}
+
 export async function deleteReview(id) {
   const { error } = await supabase.from('reviews').delete().eq('id', id);
   if (error) throw error;

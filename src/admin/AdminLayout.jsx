@@ -13,6 +13,7 @@ const links = [
   { to: '/admin/orders', label: 'Orders' },
   { to: '/admin/customers', label: 'Customers' },
   { to: '/admin/reviews', label: 'Reviews' },
+  { to: '/admin/errors', label: 'Error Reports' },
   { to: '/admin/analytics', label: 'Analytics' },
   { to: '/admin/settings', label: 'Settings' },
 ];

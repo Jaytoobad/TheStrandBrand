@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import posthog, { canCapturePostHog } from '../lib/posthog';
+import { setErrorReporterToken } from '../lib/errorReporter';
 import { fetchProfile } from '../services/auth';
 
 const AuthContext = createContext(null);
@@ -34,7 +35,13 @@ export function AuthProvider({ children }) {
       loadProfile(session?.user ?? null).finally(() => setLoading(false));
     });
 
+    // Cached here rather than read inside the error reporter: an error during
+    // page unload has no time to await a session lookup, and without the token
+    // the report is filed anonymously.
+    setErrorReporterToken(session?.access_token ?? null);
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setErrorReporterToken(session?.access_token ?? null);
       setUser(session?.user ?? null);
       loadProfile(session?.user ?? null);
     });
