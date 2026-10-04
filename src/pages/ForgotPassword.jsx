@@ -31,7 +31,7 @@ export default function ForgotPassword() {
           <p>If an account exists for {email}, we've sent a password reset link.</p>
         ) : (
           <>
-            <div className="form-group"><label>Email</label><input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+            <div className="form-group"><label htmlFor="reset-email">Email</label><input id="reset-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
             <button className="btn btn-primary btn-block" disabled={loading}>{loading ? 'Sending…' : 'Send Reset Link'}</button>
           </>
         )}

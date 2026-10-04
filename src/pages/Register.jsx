@@ -64,12 +64,17 @@ export default function Register() {
     setErrors({});
     setLoading(true);
     try {
-      const { user } = await signUp(form);
+      const { user, session } = await signUp(form);
       if (user && canCapturePostHog()) {
         posthog.identify(user.id);
         posthog.capture('account_registered', { method: 'password' });
       }
-      setVerifySent(true);
+      // Production currently requires email confirmation, so there is no session
+      // and the customer has to confirm first. If confirmation is ever turned
+      // off, Supabase returns a session and they are already signed in — telling
+      // them to check their email in that case would strand them.
+      if (session) navigate('/account');
+      else setVerifySent(true);
     } catch (err) {
       if (canCapturePostHog()) posthog.captureException(err);
       showToast(friendlyAuthError(err), 'error');
